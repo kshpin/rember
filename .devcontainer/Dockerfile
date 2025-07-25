@@ -26,6 +26,10 @@ RUN apt-get install -y \
     pkg-config \
     libfontconfig1-dev
 
+# websocat for testing websocket connection
+RUN curl -L -o /usr/local/bin/websocat https://github.com/vi/websocat/releases/download/v4.0.0-alpha2/websocat.x86_64-unknown-linux-musl && \
+    chmod +x /usr/local/bin/websocat
+
 # Use the current user (with the same UID/GID as the host user)
 ARG USERNAME=user
 ARG USER_UID=1001
