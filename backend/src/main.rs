@@ -1,3 +1,4 @@
+mod engine;
 mod server;
 
 #[tokio::main]
@@ -8,5 +9,5 @@ async fn main() {
         .init();
 
     let addr = "0.0.0.0:3210";
-    server::listener::start(addr).await;
+    server::listener::start(addr, engine::serializer::handle_message).await;
 }

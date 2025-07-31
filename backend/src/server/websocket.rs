@@ -6,7 +6,11 @@ use tokio_tungstenite::{
 };
 use tracing::debug;
 
-pub async fn handle_websocket(raw_stream: TcpStream) {
+pub async fn handle_websocket<F, Fut>(raw_stream: TcpStream, handle_message: F)
+where
+    F: Fn(Utf8Bytes) -> Fut + Send + Sync + Clone + 'static,
+    Fut: Future<Output = Result<Utf8Bytes, ()>> + Send + 'static,
+{
     let ws_stream = accept_async(raw_stream).await.expect("accept_async failed");
     let (mut outgoing, mut incoming) = ws_stream.split();
 
@@ -29,9 +33,4 @@ pub async fn handle_websocket(raw_stream: TcpStream) {
             .await
             .expect("failed to send message");
     }
-}
-
-async fn handle_message(msg: Utf8Bytes) -> Result<Utf8Bytes, ()> {
-    // send it back
-    Ok(msg)
 }
