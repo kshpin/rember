@@ -1,14 +1,15 @@
-use axum::{Router, routing::any};
 use tokio::net::TcpListener;
+use tracing::info;
 
-use crate::server::websocket::websocket_handler;
+use crate::server::websocket::handle_websocket;
 
 pub async fn start(addr: &str) {
-    let app = Router::new().route("/", any(websocket_handler));
+    let listener = TcpListener::bind(addr).await.unwrap();
+    info!("listening on {}", addr);
 
-    tracing::debug!("listening on {}", addr);
-
-    axum::serve(TcpListener::bind(addr).await.unwrap(), app)
-        .await
-        .unwrap();
+    while let Ok((stream, _)) = listener.accept().await {
+        tokio::spawn(async move {
+            handle_websocket(stream).await;
+        });
+    }
 }

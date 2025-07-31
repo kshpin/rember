@@ -1,23 +1,37 @@
-use axum::{
-    extract::ws::{Message, WebSocket, WebSocketUpgrade},
-    response::IntoResponse,
+use futures::{SinkExt, stream::StreamExt};
+use tokio::net::TcpStream;
+use tokio_tungstenite::{
+    accept_async,
+    tungstenite::{Utf8Bytes, protocol::Message},
 };
-use futures::stream::StreamExt;
+use tracing::debug;
 
-pub async fn websocket_handler(ws: WebSocketUpgrade) -> impl IntoResponse {
-    ws.on_upgrade(handle_socket)
+pub async fn handle_websocket(raw_stream: TcpStream) {
+    let ws_stream = accept_async(raw_stream).await.expect("accept_async failed");
+    let (mut outgoing, mut incoming) = ws_stream.split();
+
+    loop {
+        let msg = incoming.next().await;
+        let Some(msg) = msg else {
+            debug!("socket closed");
+            break;
+        };
+
+        let Ok(Message::Text(text)) = msg else {
+            continue;
+        };
+        debug!("received message: {}", text);
+
+        let response = handle_message(text).await.expect("couldn't handle message");
+
+        outgoing
+            .send(Message::Text(response))
+            .await
+            .expect("failed to send message");
+    }
 }
 
-async fn handle_socket(mut socket: WebSocket) {
-    while let Some(Ok(msg)) = socket.next().await {
-        if let Message::Text(text) = msg {
-            tracing::debug!("received message: {}", text);
-
-            if socket.send(Message::Text(text.clone())).await.is_err() {
-                break;
-            }
-        }
-    }
-
-    tracing::debug!("client disconnected");
+async fn handle_message(msg: Utf8Bytes) -> Result<Utf8Bytes, ()> {
+    // send it back
+    Ok(msg)
 }
