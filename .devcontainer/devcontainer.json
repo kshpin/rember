@@ -4,9 +4,6 @@
         "dockerfile": "Dockerfile",
         "context": ".."
     },
-    "forwardPorts": [
-        3210
-    ],
     "customizations": {
         "vscode": {
             "extensions": [
