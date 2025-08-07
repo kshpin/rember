@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:17
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: rember_db
+    networks:
+      - dev-network
+    volumes:
+      - rember-postgres-dev:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  devcontainer:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    command: sleep infinity
+    ports:
+      - "3210:3210"
+    depends_on:
+      - postgres
+    networks:
+      - dev-network
+    volumes:
+      - ..:/workspace
+
+networks:
+  dev-network:
+    driver: bridge
+
+volumes:
+  rember-postgres-dev:

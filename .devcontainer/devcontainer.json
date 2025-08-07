@@ -1,15 +1,19 @@
 {
-    "name": "Rember",
-    "build": {
-        "dockerfile": "Dockerfile",
-        "context": ".."
+    "name": "Rember devcontainer",
+    "dockerComposeFile": ["docker-compose.yml"],
+    "service": "devcontainer",
+    "workspaceFolder": "/workspace",
+    "containerEnv": {
+        "DATABASE_URL": "postgres://postgres:postgres@postgres:5432/rember_db"
     },
+    "shutdownAction": "stopCompose",
     "customizations": {
         "vscode": {
             "extensions": [
                 "rust-lang.rust-analyzer",
                 "tamasfe.even-better-toml",
-                "serayuzgur.crates"
+                "serayuzgur.crates",
+                "vadimcn.vscode-lldb"
             ]
         }
     }

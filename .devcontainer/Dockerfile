@@ -7,6 +7,7 @@ RUN dpkg --add-architecture arm64 && \
     apt-get install --assume-yes \
     curl \
     build-essential \
+    lldb \
     cmake \
     g++-aarch64-linux-gnu \
     git \
