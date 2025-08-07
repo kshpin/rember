@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug rember-backend",
+            "program": "${workspaceFolder}/backend/target/debug/rember-backend",
+            "args": [],
+            "cwd": "${workspaceFolder}/backend",
+            "preLaunchTask": "rember: build backend",
+            "sourceMap": {
+                ".": "${workspaceFolder}/backend"
+            }
+        }
+    ]
+}
