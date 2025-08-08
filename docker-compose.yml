@@ -18,6 +18,9 @@ services:
       dockerfile: Dockerfile
     ports:
       - 3210:3210
+    environment:
+      LOG_LEVEL: ${BACKEND_LOG_LEVEL}
+      DATABASE_URL: ${BACKEND_DATABASE_URL}
     depends_on:
       - postgres
     networks:
