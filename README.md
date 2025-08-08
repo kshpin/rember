@@ -2,17 +2,36 @@
 
 I forget things all the time. This is a tool to help me record short notes of ideas, thoughts, events, and other things that I can reference later on.
 
-## Development plan
+## Backend
 
-Need to first settle on a backend architecture.
+### Communication interface
 
-Options up for comparison:
-- cloudflare workers + D1
-- self hosted + postgres
+The server communicates with clients through websockets. Message format is as follows:
 
-Criteria for choosing:
-- service latency
-  - i want to be able to type in a search box and have the database entries filter using fuzzy search on every keystroke
-- long term cost
-  - back of the napkin - with heavy usage (adding 480 notes per day for a year, each a sentence long), 35MB of new data per year
-  - if self hosted, VPS cost, domain name, DNS
+```json
+{
+    "type": "message_type",
+    "data": {
+        // actual data, whose format is determined by the message type
+    }
+}
+```
+
+The specific data format depends on the message type. See `backend/src/engine/core.rs` for the list of supported message types.
+
+### Data model
+
+The core data is stored as a collection of notes. Each note has:
+- some text content
+- zero or more tags
+- an inception date
+- zero or more additional labeled dates
+- zero or more linked notes
+
+### Search
+
+Search is the primary usecase for the app. Notes can be searched by:
+- tags (fuzzy)
+- text content (fuzzy)
+- dates (range?)
+- links from a given note
