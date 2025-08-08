@@ -1,19 +1,13 @@
+use crate::engine::core::Message;
 use serde::de::DeserializeOwned;
-use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tokio_tungstenite::tungstenite::Utf8Bytes;
 
-#[derive(Debug, Deserialize, Serialize)]
-struct TestStruct {
-    field1: String,
-    field2: String,
+fn extract_data<T: DeserializeOwned>(json: Value) -> Result<T, String> {
+    T::deserialize(&json["data"]).map_err(|e| format!("Failed to deserialize data field: {e}"))
 }
 
-fn extract_data<T: DeserializeOwned>(json: Value) -> T {
-    T::deserialize(&json["data"]).unwrap()
-}
-
-/// Extracts the data from the json message and deserializes it into a type
+/// Extracts the data from the json message and deserializes it into a Message enum
 /// based on the type of the message.
 ///
 /// ```json
@@ -24,20 +18,16 @@ fn extract_data<T: DeserializeOwned>(json: Value) -> T {
 ///     }
 /// }
 /// ```
-pub async fn handle_message(msg: Utf8Bytes) -> Result<Utf8Bytes, ()> {
-    let json: Value = serde_json::from_str(&msg).unwrap();
+pub fn from_message(msg: Utf8Bytes) -> Result<Message, String> {
+    let json: Value =
+        serde_json::from_str(&msg).map_err(|e| format!("Failed to parse JSON: {e}"))?;
 
     match json["type"].as_str() {
-        None => {
-            println!("unknown class: {json:?}");
-        }
         Some("test") => {
-            let test_struct: TestStruct = extract_data(json);
-            println!("test_struct: {test_struct:?}");
+            let test_struct = extract_data(json)?;
+            Ok(Message::Test(test_struct))
         }
-        Some(class) => {
-            println!("unknown class: {class}");
-        }
+        Some(class) => Ok(Message::Unknown(class.to_string())),
+        None => Err("Missing type field in message".to_string()),
     }
-    Ok(msg)
 }

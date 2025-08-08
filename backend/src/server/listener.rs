@@ -7,7 +7,7 @@ use crate::server::websocket::handle_websocket;
 pub async fn start<F, Fut>(addr: &str, handle_message: F)
 where
     F: Fn(Utf8Bytes) -> Fut + Send + Sync + Clone + 'static,
-    Fut: Future<Output = Result<Utf8Bytes, ()>> + Send + 'static,
+    Fut: Future<Output = Result<Utf8Bytes, String>> + Send + 'static,
 {
     let listener = TcpListener::bind(addr).await.unwrap();
     info!("listening on {}", addr);
