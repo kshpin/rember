@@ -17,6 +17,15 @@ async fn main() {
         .with_target(false)
         .init();
 
+    let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let engine = engine::core::Engine::with_database_url(&db_url)
+        .await
+        .expect("Failed to initialize engine with database");
+
     let addr = "0.0.0.0:3210";
-    server::listener::start(addr, engine::serializer::handle_message).await;
+    server::listener::start(addr, move |msg| {
+        let engine = engine.clone();
+        async move { engine.handle_message(msg).await }
+    })
+    .await;
 }
