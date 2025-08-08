@@ -1,13 +1,12 @@
-use chrono::{DateTime, Utc};
+use chrono::NaiveDateTime;
 use sqlx::{PgPool, Result};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, sqlx::FromRow)]
 pub struct Note {
     pub id: Uuid,
-    pub title: String,
-    pub body: String,
-    pub published_at: Option<DateTime<Utc>>,
+    pub text: String,
+    pub created_at: NaiveDateTime,
 }
 
 #[derive(Clone)]
@@ -20,16 +19,14 @@ impl NoteRepository {
         Self { pool }
     }
 
-    pub async fn create(&self, title: &str, body: &str) -> Result<Note> {
-        /* sqlx::query_as!(
+    pub async fn create(&self, text: &str) -> Result<Note> {
+        sqlx::query_as!(
             Note,
-            "INSERT INTO notes (title, body) VALUES ($1, $2) RETURNING *",
-            title,
-            body
+            "INSERT INTO notes (text) VALUES ($1) RETURNING *",
+            text
         )
         .fetch_one(&self.pool)
-        .await */
-        unimplemented!()
+        .await
     }
 
     pub async fn get_by_id(&self, id: Uuid) -> Result<Option<Note>> {

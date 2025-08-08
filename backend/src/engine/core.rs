@@ -29,6 +29,9 @@ impl Engine {
 
     pub async fn with_database_url(db_url: &str) -> Result<Self, sqlx::Error> {
         let db_pool = PgPool::connect(db_url).await?;
+        sqlx::migrate!("src/engine/database/migrations")
+            .run(&db_pool)
+            .await?;
         let database = Database::with_pool(db_pool);
         Ok(Self::new(database))
     }
