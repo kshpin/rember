@@ -1,17 +1,22 @@
 pub mod notes;
+pub mod service;
+pub mod tags;
 
-use notes::NoteRepository;
+use notes::NotesRepository;
 use sqlx::PgPool;
+use tags::TagsRepository;
 
 #[derive(Clone)]
 pub struct Database {
-    pub notes: NoteRepository,
+    pub notes: NotesRepository,
+    pub tags: TagsRepository,
 }
 
 impl Database {
     pub fn with_pool(pool: PgPool) -> Self {
         Self {
-            notes: NoteRepository::new(pool.clone()),
+            notes: NotesRepository::new(pool.clone()),
+            tags: TagsRepository::new(pool.clone()),
         }
     }
 }

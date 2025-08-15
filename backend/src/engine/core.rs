@@ -10,9 +10,22 @@ pub struct TestStruct {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct CreateNote {
+    pub text: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GetNotes {
+    pub limit: Option<u32>,
+    pub offset: Option<u32>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type", content = "data")]
 #[serde(rename_all = "snake_case")]
 pub enum Message {
+    CreateNote(CreateNote),
+    GetNotes(GetNotes),
     Test(TestStruct),
     Unknown(String),
 }
@@ -50,19 +63,32 @@ impl Engine {
         let parsed_message = serde_json::from_str(&msg).map_err(|e| e.to_string())?;
 
         match parsed_message {
+            Message::CreateNote(create_note) => {
+                match self.database.create_note(&create_note.text).await {
+                    Ok(note) => serde_json::to_string(&note)
+                        .map(|json| json.into())
+                        .map_err(|e| e.to_string()),
+                    Err(e) => Err(e.to_string()),
+                }
+            }
+            Message::GetNotes(_get_notes) => match self.database.get_all_notes().await {
+                Ok(notes) => serde_json::to_string(&notes)
+                    .map(|json| json.into())
+                    .map_err(|e| e.to_string()),
+                Err(e) => Err(e.to_string()),
+            },
             Message::Test(test_struct) => {
                 println!("Received test message: {test_struct:?}");
-                // Handle test message logic here
+                Ok("".into())
             }
             Message::Unknown(msg_type) => {
                 println!("Unknown message type: {msg_type}");
+                Ok(msg)
             }
         }
-
-        Ok(msg)
     }
 
-    pub fn database(&self) -> &Database {
+    pub fn _database(&self) -> &Database {
         &self.database
     }
 }
