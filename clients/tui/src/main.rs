@@ -31,7 +31,7 @@ impl App {
         self.running = true;
         while self.running {
             self.handle_events().await?;
-            terminal.draw(|frame| self.render(frame))?;
+            terminal.draw(|frame| frame.render_widget(&self, frame.area()))?;
         }
         Ok(())
     }

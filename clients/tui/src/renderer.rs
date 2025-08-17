@@ -1,5 +1,5 @@
 use ratatui::{
-    Frame,
+    prelude::{Buffer, Rect, Widget},
     style::Stylize,
     text::Line,
     widgets::{Block, Paragraph},
@@ -7,8 +7,8 @@ use ratatui::{
 
 use crate::App;
 
-impl App {
-    pub fn render(&mut self, frame: &mut Frame) {
+impl Widget for &App {
+    fn render(self, area: Rect, buf: &mut Buffer) {
         let title = Line::from("Ratatui Simple Template")
             .bold()
             .blue()
@@ -16,11 +16,9 @@ impl App {
         let text = "Hello, Ratatui!\n\n\
             Created using https://github.com/ratatui/templates\n\
             Press `Esc`, `Ctrl-C` or `q` to stop running.";
-        frame.render_widget(
-            Paragraph::new(text)
-                .block(Block::bordered().title(title))
-                .centered(),
-            frame.area(),
-        )
+        Paragraph::new(text)
+            .block(Block::bordered().title(title))
+            .centered()
+            .render(area, buf);
     }
 }
