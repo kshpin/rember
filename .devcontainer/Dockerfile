@@ -27,8 +27,6 @@ RUN apt-get install -y \
     pkg-config \
     libfontconfig1-dev
 
-RUN cargo install sqlx-cli
-
 # websocat for testing websocket connection
 RUN curl -L -o /usr/local/bin/websocat https://github.com/vi/websocat/releases/download/v4.0.0-alpha2/websocat.x86_64-unknown-linux-musl && \
     chmod +x /usr/local/bin/websocat
