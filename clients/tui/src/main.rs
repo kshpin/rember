@@ -20,11 +20,16 @@ async fn main() -> color_eyre::Result<()> {
 pub struct App {
     running: bool,
     crossterm_event_stream: EventStream,
+    search_text: String,
 }
 
 impl App {
     pub fn new() -> Self {
-        Self::default()
+        Self {
+            running: false,
+            crossterm_event_stream: EventStream::default(),
+            search_text: String::new(),
+        }
     }
 
     pub async fn run(mut self, mut terminal: Terminal<CrosstermBackend<Stdout>>) -> Result<()> {
