@@ -1,0 +1,40 @@
+use color_eyre::Result;
+use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
+use futures::{FutureExt, StreamExt};
+
+use crate::App;
+
+impl App {
+    pub async fn handle_events(&mut self) -> Result<()> {
+        tokio::select! {
+            event = self.crossterm_event_stream.next().fuse() => self.handle_crossterm_events(event).await,
+            _ = event_timeout(100).fuse() => {}
+        }
+        Ok(())
+    }
+
+    async fn handle_crossterm_events(&mut self, event: Option<Result<Event, std::io::Error>>) {
+        let Some(Ok(event)) = event else {
+            return;
+        };
+
+        match event {
+            Event::Key(key) if key.kind == KeyEventKind::Press => self.on_key_event(key),
+            Event::Mouse(_) => {} // all my homies hate mice
+            Event::Resize(_, _) => {}
+            _ => {}
+        }
+    }
+
+    fn on_key_event(&mut self, key: KeyEvent) {
+        match (key.modifiers, key.code) {
+            (_, KeyCode::Esc | KeyCode::Char('q'))
+            | (KeyModifiers::CONTROL, KeyCode::Char('c') | KeyCode::Char('C')) => self.quit(),
+            _ => {}
+        }
+    }
+}
+
+async fn event_timeout(timeout_ms: u64) {
+    tokio::time::sleep(tokio::time::Duration::from_millis(timeout_ms)).await;
+}
