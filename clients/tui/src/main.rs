@@ -20,7 +20,7 @@ async fn main() -> color_eyre::Result<()> {
 #[derive(Debug, Default)]
 pub struct App {
     running: bool,
-    event_stream: EventStream,
+    crossterm_event_stream: EventStream,
 }
 
 impl App {
@@ -31,7 +31,7 @@ impl App {
     pub async fn run(mut self, mut terminal: DefaultTerminal) -> Result<()> {
         self.running = true;
         while self.running {
-            self.handle_crossterm_events().await?;
+            self.handle_events().await?;
             terminal.draw(|frame| self.render(frame))?;
         }
         Ok(())
@@ -53,28 +53,25 @@ impl App {
         )
     }
 
-    async fn handle_crossterm_events(&mut self) -> Result<()> {
+    async fn handle_events(&mut self) -> Result<()> {
         tokio::select! {
-            event = self.event_stream.next().fuse() => {
-                match event {
-                    Some(Ok(evt)) => {
-                        match evt {
-                            Event::Key(key)
-                                if key.kind == KeyEventKind::Press
-                                    => self.on_key_event(key),
-                            Event::Mouse(_) => {}
-                            Event::Resize(_, _) => {}
-                            _ => {}
-                        }
-                    }
-                    _ => {}
-                }
-            }
-            _ = tokio::time::sleep(tokio::time::Duration::from_millis(100)) => {
-                // Sleep for a short duration to avoid busy waiting.
-            }
+            event = self.crossterm_event_stream.next().fuse() => self.handle_crossterm_events(event).await,
+            _ = event_timeout(100).fuse() => {}
         }
         Ok(())
+    }
+
+    async fn handle_crossterm_events(&mut self, event: Option<Result<Event, std::io::Error>>) {
+        let Some(Ok(event)) = event else {
+            return;
+        };
+
+        match event {
+            Event::Key(key) if key.kind == KeyEventKind::Press => self.on_key_event(key),
+            Event::Mouse(_) => {} // all my homies hate mice
+            Event::Resize(_, _) => {}
+            _ => {}
+        }
     }
 
     fn on_key_event(&mut self, key: KeyEvent) {
@@ -88,4 +85,8 @@ impl App {
     fn quit(&mut self) {
         self.running = false;
     }
+}
+
+async fn event_timeout(timeout_ms: u64) {
+    tokio::time::sleep(tokio::time::Duration::from_millis(timeout_ms)).await;
 }
