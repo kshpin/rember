@@ -1,5 +1,5 @@
 use color_eyre::Result;
-use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
+use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind};
 use futures::{FutureExt, StreamExt};
 
 use crate::App;
@@ -8,6 +8,7 @@ impl App {
     pub async fn handle_events(&mut self) -> Result<()> {
         tokio::select! {
             event = self.crossterm_event_stream.next().fuse() => self.handle_crossterm_events(event).await,
+            message = self.websocket_client.recv() => self.handle_websocket_message(message).await,
             _ = event_timeout(100).fuse() => {}
         }
         Ok(())
@@ -19,18 +20,28 @@ impl App {
         };
 
         match event {
-            Event::Key(key) if key.kind == KeyEventKind::Press => self.on_key_event(key),
+            Event::Key(key) if key.kind == KeyEventKind::Press => self.on_key_event(key).await,
             Event::Mouse(_) => {} // all my homies hate mice
             Event::Resize(_, _) => {}
             _ => {}
         }
     }
 
-    fn on_key_event(&mut self, key: KeyEvent) {
-        match (key.modifiers, key.code) {
-            (_, KeyCode::Esc | KeyCode::Char('q'))
-            | (KeyModifiers::CONTROL, KeyCode::Char('c') | KeyCode::Char('C')) => self.quit(),
+    async fn on_key_event(&mut self, key: KeyEvent) {
+        match key.code {
+            KeyCode::Char('q') => self.quit(),
+            KeyCode::Char('p') => self
+                .websocket_client
+                .send(r#"{"type":"test","data":{"field1":"hello","field2":"world"}}"#.to_string())
+                .await
+                .unwrap(),
             _ => {}
+        }
+    }
+
+    async fn handle_websocket_message(&mut self, message: Option<String>) {
+        if let Some(message) = message {
+            println!("Received message from backend: {message}");
         }
     }
 }

@@ -4,6 +4,9 @@ use color_eyre::Result;
 use crossterm::event::EventStream;
 use ratatui::{Terminal, prelude::CrosstermBackend};
 
+use client::websocket::WebSocketClient;
+
+mod client;
 mod events;
 mod renderer;
 
@@ -21,6 +24,7 @@ pub struct App {
     running: bool,
     crossterm_event_stream: EventStream,
     search_text: String,
+    websocket_client: WebSocketClient,
 }
 
 impl App {
@@ -29,15 +33,25 @@ impl App {
             running: false,
             crossterm_event_stream: EventStream::default(),
             search_text: String::new(),
+            websocket_client: WebSocketClient::new(),
         }
     }
 
     pub async fn run(mut self, mut terminal: Terminal<CrosstermBackend<Stdout>>) -> Result<()> {
+        let (outgoing_handle, incoming_handle) = self
+            .websocket_client
+            .connect_and_run("ws://localhost:3210")
+            .await
+            .expect("websocket connection failed - is the backend running?");
+
         self.running = true;
         while self.running {
             self.handle_events().await?;
             terminal.draw(|frame| frame.render_widget(&self, frame.area()))?;
         }
+
+        outgoing_handle.abort();
+        incoming_handle.abort();
         Ok(())
     }
 
