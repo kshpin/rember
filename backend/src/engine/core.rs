@@ -21,11 +21,20 @@ pub struct GetNotes {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct GetNotesFiltered {
+    pub search_text: Option<String>,
+    pub tags: Vec<String>,
+    pub limit: Option<u32>,
+    pub offset: Option<u32>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type", content = "data")]
 #[serde(rename_all = "snake_case")]
 pub enum Message {
     CreateNote(CreateNote),
     GetNotes(GetNotes),
+    GetNotesFiltered(GetNotesFiltered),
     Test(TestStruct),
     Unknown(String),
 }
@@ -72,6 +81,21 @@ impl Engine {
                 }
             }
             Message::GetNotes(_get_notes) => match self.database.get_all_notes().await {
+                Ok(notes) => serde_json::to_string(&notes)
+                    .map(|json| json.into())
+                    .map_err(|e| e.to_string()),
+                Err(e) => Err(e.to_string()),
+            },
+            Message::GetNotesFiltered(GetNotesFiltered {
+                search_text,
+                tags,
+                limit,
+                offset,
+            }) => match self
+                .database
+                .get_notes_filtered(search_text, tags, limit, offset)
+                .await
+            {
                 Ok(notes) => serde_json::to_string(&notes)
                     .map(|json| json.into())
                     .map_err(|e| e.to_string()),

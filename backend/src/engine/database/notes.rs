@@ -1,12 +1,12 @@
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool, Result};
+use sqlx::{FromRow, PgPool, Result, query_builder::QueryBuilder};
 use uuid::Uuid;
 
 // add import for tags
 use super::tags::Tag;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, FromRow)]
 pub struct Note {
     pub id: Uuid,
     pub text: String,
@@ -57,5 +57,22 @@ impl NotesRepository {
         sqlx::query_as!(Note, "SELECT * FROM notes")
             .fetch_all(&self.pool)
             .await
+    }
+
+    pub async fn get_filtered(
+        &self,
+        search_text: Option<String>,
+        tags: Vec<String>,
+        limit: Option<u32>,
+        offset: Option<u32>,
+    ) -> Result<Vec<Note>> {
+        sqlx::query_file_as!(
+            Note,
+            "src/engine/database/queries/note_list_search.sql",
+            search_text,
+            &tags,
+        )
+        .fetch_all(&self.pool)
+        .await
     }
 }
