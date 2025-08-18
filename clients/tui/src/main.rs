@@ -8,6 +8,7 @@ use client::websocket::WebSocketClient;
 
 mod client;
 mod events;
+mod keys;
 mod renderer;
 
 #[tokio::main]
@@ -24,6 +25,7 @@ pub struct App {
     running: bool,
     crossterm_event_stream: EventStream,
     search_text: String,
+    search_cursor_position: usize,
     websocket_client: WebSocketClient,
 }
 
@@ -33,6 +35,7 @@ impl App {
             running: false,
             crossterm_event_stream: EventStream::default(),
             search_text: String::new(),
+            search_cursor_position: 0,
             websocket_client: WebSocketClient::new(),
         }
     }

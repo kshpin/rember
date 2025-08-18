@@ -27,18 +27,6 @@ impl App {
         }
     }
 
-    async fn on_key_event(&mut self, key: KeyEvent) {
-        match key.code {
-            KeyCode::Char('q') => self.quit(),
-            KeyCode::Char('p') => self
-                .websocket_client
-                .send(r#"{"type":"test","data":{"field1":"hello","field2":"world"}}"#.to_string())
-                .await
-                .unwrap(),
-            _ => {}
-        }
-    }
-
     async fn handle_websocket_message(&mut self, message: Option<String>) {
         if let Some(message) = message {
             println!("Received message from backend: {message}");
