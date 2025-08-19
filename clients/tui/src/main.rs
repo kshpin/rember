@@ -1,8 +1,5 @@
-use std::io::Stdout;
-
 use color_eyre::Result;
 use crossterm::event::EventStream;
-use ratatui::{Terminal, prelude::CrosstermBackend};
 
 use client::websocket::WebSocketClient;
 
@@ -14,10 +11,7 @@ mod renderer;
 #[tokio::main]
 async fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
-    let terminal = ratatui::init();
-    let result = App::new().run(terminal).await;
-    ratatui::restore();
-    result
+    App::new().run().await
 }
 
 #[derive(Debug, Default)]
@@ -40,21 +34,26 @@ impl App {
         }
     }
 
-    pub async fn run(mut self, mut terminal: Terminal<CrosstermBackend<Stdout>>) -> Result<()> {
-        let (outgoing_handle, incoming_handle) = self
+    pub async fn run(mut self) -> Result<()> {
+        let Ok((outgoing_thread, incoming_thread)) = self
             .websocket_client
             .connect_and_run("ws://localhost:3210")
             .await
-            .expect("websocket connection failed - is the backend running?");
+        else {
+            eprintln!("websocket connection failed - is the backend running?");
+            return Ok(());
+        };
 
+        let mut terminal = ratatui::init();
         self.running = true;
         while self.running {
             self.handle_events().await?;
             terminal.draw(|frame| frame.render_widget(&self, frame.area()))?;
         }
+        ratatui::restore();
 
-        outgoing_handle.abort();
-        incoming_handle.abort();
+        outgoing_thread.abort();
+        incoming_thread.abort();
         Ok(())
     }
 

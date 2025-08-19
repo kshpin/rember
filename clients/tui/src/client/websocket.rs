@@ -4,15 +4,15 @@ use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
 
 #[derive(Debug, Default)]
 pub struct WebSocketClient {
-    app_to_client_tx: Option<mpsc::Sender<String>>,
-    client_to_app_rx: Option<mpsc::Receiver<String>>,
+    app_to_server_tx: Option<mpsc::Sender<String>>,
+    server_to_app_rx: Option<mpsc::Receiver<String>>,
 }
 
 impl WebSocketClient {
     pub fn new() -> Self {
         Self {
-            app_to_client_tx: None,
-            client_to_app_rx: None,
+            app_to_server_tx: None,
+            server_to_app_rx: None,
         }
     }
 
@@ -20,18 +20,18 @@ impl WebSocketClient {
         &mut self,
         url: &str,
     ) -> Result<(JoinHandle<()>, JoinHandle<()>), Box<dyn std::error::Error>> {
-        let (app_to_client_tx, mut app_to_client_rx) = mpsc::channel::<String>(100);
-        let (client_to_app_tx, client_to_app_rx) = mpsc::channel::<String>(100);
+        let (app_to_server_tx, mut app_to_server_rx) = mpsc::channel::<String>(100);
+        let (server_to_app_tx, server_to_app_rx) = mpsc::channel::<String>(100);
 
-        self.app_to_client_tx = Some(app_to_client_tx);
-        self.client_to_app_rx = Some(client_to_app_rx);
+        self.app_to_server_tx = Some(app_to_server_tx);
+        self.server_to_app_rx = Some(server_to_app_rx);
 
         let (ws_stream, _) = connect_async(url).await?;
         let (mut outgoing, mut incoming) = ws_stream.split();
 
         // Handle messages app -> backend
-        let outgoing_handle = tokio::spawn(async move {
-            while let Some(msg) = app_to_client_rx.recv().await {
+        let outgoing_thread = tokio::spawn(async move {
+            while let Some(msg) = app_to_server_rx.recv().await {
                 let send_result = outgoing.send(Message::Text(msg.into())).await;
 
                 if send_result.is_err() {
@@ -41,9 +41,9 @@ impl WebSocketClient {
         });
 
         // Handle messages app <- backend
-        let incoming_handle = tokio::spawn(async move {
+        let incoming_thread = tokio::spawn(async move {
             while let Some(Ok(msg)) = incoming.next().await {
-                let send_result = client_to_app_tx.try_send(msg.to_string());
+                let send_result = server_to_app_tx.try_send(msg.to_string());
 
                 if send_result.is_err() {
                     break;
@@ -51,24 +51,24 @@ impl WebSocketClient {
             }
         });
 
-        Ok((outgoing_handle, incoming_handle))
+        Ok((outgoing_thread, incoming_thread))
     }
 
     pub async fn send(&self, message: String) -> Result<(), mpsc::error::SendError<String>> {
-        let Some(app_to_client_tx) = &self.app_to_client_tx else {
+        let Some(app_to_server_tx) = &self.app_to_server_tx else {
             return Err(mpsc::error::SendError(
                 "send channel doesn't exist".to_string(),
             ));
         };
 
-        app_to_client_tx.send(message).await
+        app_to_server_tx.send(message).await
     }
 
     pub async fn recv(&mut self) -> Option<String> {
-        let Some(client_to_app_rx) = &mut self.client_to_app_rx else {
+        let Some(server_to_app_rx) = &mut self.server_to_app_rx else {
             return None;
         };
 
-        client_to_app_rx.recv().await
+        server_to_app_rx.recv().await
     }
 }
