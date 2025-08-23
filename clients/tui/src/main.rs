@@ -1,13 +1,14 @@
 use client::websocket::WebSocketClient;
-use clipboard_rs::ClipboardContext;
 use color_eyre::Result;
 use crossterm::event::EventStream;
-use keys::Cursor;
+use text_box::TextBox;
 
 mod client;
+mod clipboard;
 mod events;
 mod keys;
 mod renderer;
+mod text_box;
 
 #[tokio::main]
 async fn main() -> color_eyre::Result<()> {
@@ -19,10 +20,7 @@ pub struct App {
     running: bool,
     crossterm_event_stream: EventStream,
 
-    clipboard: ClipboardContext,
-
-    search_text: String,
-    search_cursor: Cursor,
+    search_box: TextBox,
 
     websocket_client: WebSocketClient,
 }
@@ -32,9 +30,7 @@ impl App {
         Self {
             running: false,
             crossterm_event_stream: EventStream::default(),
-            clipboard: ClipboardContext::new().expect("clipboard not supported on this platform"),
-            search_text: String::new(),
-            search_cursor: Cursor::default(),
+            search_box: TextBox::new(),
             websocket_client: WebSocketClient::new(),
         }
     }

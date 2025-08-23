@@ -11,7 +11,7 @@ use crate::App;
 impl Widget for &App {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let search_area = Rect::new(0, 0, area.width, 3).clamp(area);
-        self.render_search_bar(&self.search_text, search_area, buf);
+        self.render_search_bar(&self.search_box.text, search_area, buf);
     }
 }
 
@@ -20,10 +20,10 @@ impl App {
         let cursor_style = Style::default().bg(Color::White);
         let selection_style = Style::default().bg(Color::LightBlue);
 
-        let selection_range = self.search_cursor.selection_anchor.map(|anchor| {
+        let selection_range = self.search_box.cursor.selection_anchor.map(|anchor| {
             (
-                min(anchor, self.search_cursor.position),
-                max(anchor, self.search_cursor.position),
+                min(anchor, self.search_box.cursor.position),
+                max(anchor, self.search_box.cursor.position),
             )
         });
 
@@ -35,7 +35,7 @@ impl App {
                 && i < selection_right
             {
                 spans.push(Span::styled(c.to_string(), selection_style));
-            } else if i == self.search_cursor.position {
+            } else if i == self.search_box.cursor.position {
                 spans.push(Span::styled(c.to_string(), cursor_style));
             } else {
                 spans.push(Span::raw(c.to_string()));
@@ -43,7 +43,7 @@ impl App {
         }
 
         // render cursor if it's at the end of the text
-        if self.search_cursor.position == text.len() {
+        if self.search_box.cursor.position == text.len() {
             spans.push(Span::styled(" ", cursor_style));
         }
 
