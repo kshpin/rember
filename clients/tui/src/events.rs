@@ -1,5 +1,5 @@
 use color_eyre::Result;
-use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind};
+use crossterm::event::{Event, KeyEventKind};
 use futures::{FutureExt, StreamExt};
 
 use crate::App;

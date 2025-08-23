@@ -1,7 +1,8 @@
+use client::websocket::WebSocketClient;
+use clipboard_rs::ClipboardContext;
 use color_eyre::Result;
 use crossterm::event::EventStream;
-
-use client::websocket::WebSocketClient;
+use keys::Cursor;
 
 mod client;
 mod events;
@@ -14,12 +15,15 @@ async fn main() -> color_eyre::Result<()> {
     App::new().run().await
 }
 
-#[derive(Debug, Default)]
 pub struct App {
     running: bool,
     crossterm_event_stream: EventStream,
+
+    clipboard: ClipboardContext,
+
     search_text: String,
-    search_cursor_position: usize,
+    search_cursor: Cursor,
+
     websocket_client: WebSocketClient,
 }
 
@@ -28,8 +32,9 @@ impl App {
         Self {
             running: false,
             crossterm_event_stream: EventStream::default(),
+            clipboard: ClipboardContext::new().expect("clipboard not supported on this platform"),
             search_text: String::new(),
-            search_cursor_position: 0,
+            search_cursor: Cursor::default(),
             websocket_client: WebSocketClient::new(),
         }
     }
@@ -59,5 +64,11 @@ impl App {
 
     fn quit(&mut self) {
         self.running = false;
+    }
+}
+
+impl Default for App {
+    fn default() -> Self {
+        Self::new()
     }
 }

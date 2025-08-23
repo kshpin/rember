@@ -1,6 +1,14 @@
+use clipboard_rs::Clipboard;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use std::cmp::{max, min};
 
 use crate::App;
+
+#[derive(Debug, Clone, Copy, Default)]
+pub struct Cursor {
+    pub position: usize,
+    pub selection_anchor: Option<usize>,
+}
 
 impl App {
     pub async fn on_key_event(&mut self, key: KeyEvent) {
@@ -10,30 +18,175 @@ impl App {
 
         match key.code {
             KeyCode::Char(char) => {
+                // handle keyboard shortcuts
+                if key.modifiers.contains(KeyModifiers::CONTROL) {
+                    #[allow(clippy::single_match)]
+                    match char {
+                        'a' => {
+                            // select all
+
+                            self.search_cursor.selection_anchor = Some(0);
+                            self.search_cursor.position = self.search_text.len();
+                        }
+                        'c' => {
+                            // copy selection to clipboard
+
+                            let Some(selection_anchor) = self.search_cursor.selection_anchor else {
+                                return;
+                            };
+
+                            let (start, end) = (
+                                min(selection_anchor, self.search_cursor.position),
+                                max(selection_anchor, self.search_cursor.position),
+                            );
+
+                            let selection = &self.search_text[start..end];
+                            self.clipboard
+                                .set_text(selection.to_string())
+                                .expect("failed to copy to clipboard");
+                        }
+                        'x' => {
+                            // cut selection to clipboard
+
+                            let Some(selection_anchor) = self.search_cursor.selection_anchor else {
+                                return;
+                            };
+
+                            let (start, end) = (
+                                min(selection_anchor, self.search_cursor.position),
+                                max(selection_anchor, self.search_cursor.position),
+                            );
+
+                            let selection = &self.search_text[start..end];
+                            self.clipboard
+                                .set_text(selection.to_string())
+                                .expect("failed to copy to clipboard");
+
+                            self.search_text.drain(start..end);
+                            self.search_cursor.selection_anchor = None;
+                            self.search_cursor.position = start;
+                        }
+                        'v' => {
+                            // paste from clipboard
+
+                            let pos;
+                            if let Some(anchor) = self.search_cursor.selection_anchor {
+                                // delete selection if there is one
+                                let (start, end) = (
+                                    min(anchor, self.search_cursor.position),
+                                    max(anchor, self.search_cursor.position),
+                                );
+                                self.search_text.drain(start..end);
+                                self.search_cursor.selection_anchor = None;
+                                pos = start;
+                            } else {
+                                pos = self.search_cursor.position;
+                            }
+
+                            let clipboard_text = self
+                                .clipboard
+                                .get_text()
+                                .expect("failed to get clipboard text");
+                            self.search_text.insert_str(pos, &clipboard_text);
+                            self.search_cursor.position = pos + clipboard_text.len();
+                        }
+                        _ => {}
+                    }
+                    return;
+                }
+
                 // add char to search text at cursor position
-                self.search_text.insert(self.search_cursor_position, char);
-                self.search_cursor_position += 1;
+                let pos;
+                if let Some(anchor) = self.search_cursor.selection_anchor {
+                    // delete selection if there is one
+                    let (start, end) = (
+                        min(anchor, self.search_cursor.position),
+                        max(anchor, self.search_cursor.position),
+                    );
+                    self.search_text.drain(start..end);
+                    self.search_cursor.selection_anchor = None;
+                    pos = start;
+                } else {
+                    pos = self.search_cursor.position;
+                }
+
+                self.search_text.insert(pos, char);
+                self.search_cursor.position = pos + 1;
             }
             KeyCode::Backspace => {
-                if self.search_cursor_position > 0 {
-                    self.search_text.remove(self.search_cursor_position - 1);
-                    self.search_cursor_position -= 1;
+                if let Some(anchor) = self.search_cursor.selection_anchor {
+                    let (start, end) = (
+                        min(anchor, self.search_cursor.position),
+                        max(anchor, self.search_cursor.position),
+                    );
+                    self.search_text.drain(start..end);
+                    self.search_cursor.selection_anchor = None;
+                    self.search_cursor.position = start;
+                } else if self.search_cursor.position > 0 {
+                    self.search_text.remove(self.search_cursor.position - 1);
+                    self.search_cursor.position -= 1;
                 }
             }
             KeyCode::Left => {
+                if !key.modifiers.contains(KeyModifiers::SHIFT) {
+                    self.search_cursor.selection_anchor = None;
+                }
+
+                if self.search_cursor.position == 0 {
+                    return;
+                }
+
+                // if shift is held, ensure we're selecting
+                if self.search_cursor.selection_anchor.is_none()
+                    && key.modifiers.contains(KeyModifiers::SHIFT)
+                {
+                    self.search_cursor.selection_anchor = Some(self.search_cursor.position);
+                }
+
+                // move cursor left
                 if key.modifiers.contains(KeyModifiers::CONTROL) {
-                    self.search_cursor_position =
-                        get_next_word_bound(&self.search_text, self.search_cursor_position, false);
-                } else if self.search_cursor_position > 0 {
-                    self.search_cursor_position -= 1;
+                    self.search_cursor.position =
+                        get_next_word_bound(&self.search_text, self.search_cursor.position, false);
+                } else {
+                    self.search_cursor.position -= 1;
+                }
+
+                // if we return to the anchor, we're no longer selecting
+                if let Some(anchor) = self.search_cursor.selection_anchor
+                    && self.search_cursor.position == anchor
+                {
+                    self.search_cursor.selection_anchor = None;
                 }
             }
             KeyCode::Right => {
+                if !key.modifiers.contains(KeyModifiers::SHIFT) {
+                    self.search_cursor.selection_anchor = None;
+                }
+
+                if self.search_cursor.position == self.search_text.len() {
+                    return;
+                }
+
+                // if shift is held, ensure we're selecting text
+                if self.search_cursor.selection_anchor.is_none()
+                    && key.modifiers.contains(KeyModifiers::SHIFT)
+                {
+                    self.search_cursor.selection_anchor = Some(self.search_cursor.position);
+                }
+
+                // move cursor right
                 if key.modifiers.contains(KeyModifiers::CONTROL) {
-                    self.search_cursor_position =
-                        get_next_word_bound(&self.search_text, self.search_cursor_position, true);
-                } else if self.search_cursor_position < self.search_text.len() {
-                    self.search_cursor_position += 1;
+                    self.search_cursor.position =
+                        get_next_word_bound(&self.search_text, self.search_cursor.position, true);
+                } else {
+                    self.search_cursor.position += 1;
+                }
+
+                // if we return to the anchor, we're no longer selecting text
+                if let Some(anchor) = self.search_cursor.selection_anchor
+                    && self.search_cursor.position == anchor
+                {
+                    self.search_cursor.selection_anchor = None;
                 }
             }
             _ => {}

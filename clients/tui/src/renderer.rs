@@ -4,6 +4,7 @@ use ratatui::{
     text::{Line, Span},
     widgets::{Block, Paragraph},
 };
+use std::cmp::{max, min};
 
 use crate::App;
 
@@ -16,31 +17,37 @@ impl Widget for &App {
 
 impl App {
     fn render_search_bar(&self, text: &str, area: Rect, buf: &mut Buffer) {
-        let line = if self.search_cursor_position == text.len() {
-            // cursor is at the end of the text
-            // render the text and a cursor at the end
+        let cursor_style = Style::default().bg(Color::White);
+        let selection_style = Style::default().bg(Color::LightBlue);
 
-            Line::from(vec![
-                Span::raw(text),
-                Span::raw(" ").style(Style::default().bg(Color::White)),
-            ])
-        } else {
-            // cursor is in the middle of the text
-            // render the text and highlight the character at the cursor position
+        let selection_range = self.search_cursor.selection_anchor.map(|anchor| {
+            (
+                min(anchor, self.search_cursor.position),
+                max(anchor, self.search_cursor.position),
+            )
+        });
 
-            let text_before_cursor = &text[..self.search_cursor_position];
-            let text_at_cursor =
-                &text[self.search_cursor_position..self.search_cursor_position + 1];
-            let text_after_cursor = &text[self.search_cursor_position + 1..];
+        let mut spans = Vec::new();
 
-            Line::from(vec![
-                Span::raw(text_before_cursor),
-                Span::styled(text_at_cursor, Style::default().bg(Color::White)),
-                Span::raw(text_after_cursor),
-            ])
-        };
+        for (i, c) in text.chars().enumerate() {
+            if let Some((selection_left, selection_right)) = selection_range
+                && i >= selection_left
+                && i < selection_right
+            {
+                spans.push(Span::styled(c.to_string(), selection_style));
+            } else if i == self.search_cursor.position {
+                spans.push(Span::styled(c.to_string(), cursor_style));
+            } else {
+                spans.push(Span::raw(c.to_string()));
+            }
+        }
 
-        let search_bar = Paragraph::new(line).block(Block::bordered().title("Search"));
+        // render cursor if it's at the end of the text
+        if self.search_cursor.position == text.len() {
+            spans.push(Span::styled(" ", cursor_style));
+        }
+
+        let search_bar = Paragraph::new(Line::from(spans)).block(Block::bordered().title("Search"));
         search_bar.render(area, buf);
     }
 }
