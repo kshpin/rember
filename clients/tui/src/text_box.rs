@@ -25,106 +25,34 @@ impl TextBox {
     pub fn handle_key_event(&mut self, key: KeyEvent) {
         match key.code {
             KeyCode::Char(char) => {
-                // handle keyboard shortcuts
-                if key.modifiers.contains(KeyModifiers::CONTROL) {
-                    #[allow(clippy::single_match)]
-                    match char {
-                        'a' => {
-                            // select all
-
-                            self.cursor.selection_anchor = Some(0);
-                            self.cursor.position = self.text.len();
-                        }
-                        'c' => {
-                            // copy selection to clipboard
-
-                            let Some(selection_anchor) = self.cursor.selection_anchor else {
-                                return;
-                            };
-
-                            let (start, end) = (
-                                min(selection_anchor, self.cursor.position),
-                                max(selection_anchor, self.cursor.position),
-                            );
-
-                            let selection = &self.text[start..end];
-                            clipboard::set_text(selection.to_string());
-                        }
-                        'x' => {
-                            // cut selection to clipboard
-
-                            let Some(selection_anchor) = self.cursor.selection_anchor else {
-                                return;
-                            };
-
-                            let (start, end) = (
-                                min(selection_anchor, self.cursor.position),
-                                max(selection_anchor, self.cursor.position),
-                            );
-
-                            let selection = &self.text[start..end];
-                            clipboard::set_text(selection.to_string());
-
-                            self.text.drain(start..end);
-                            self.cursor.selection_anchor = None;
-                            self.cursor.position = start;
-                        }
-                        'v' => {
-                            // paste from clipboard
-
-                            let pos;
-                            if let Some(anchor) = self.cursor.selection_anchor {
-                                // delete selection if there is one
-                                let (start, end) = (
-                                    min(anchor, self.cursor.position),
-                                    max(anchor, self.cursor.position),
-                                );
-                                self.text.drain(start..end);
-                                self.cursor.selection_anchor = None;
-                                pos = start;
-                            } else {
-                                pos = self.cursor.position;
-                            }
-
-                            let clipboard_text = clipboard::get_text();
-                            self.text.insert_str(pos, &clipboard_text);
-                            self.cursor.position = pos + clipboard_text.len();
-                        }
-                        _ => {}
-                    }
+                if self.handle_shortcut(char, key.modifiers) {
                     return;
                 }
 
                 // add char to search text at cursor position
-                let pos;
-                if let Some(anchor) = self.cursor.selection_anchor {
-                    // delete selection if there is one
-                    let (start, end) = (
-                        min(anchor, self.cursor.position),
-                        max(anchor, self.cursor.position),
-                    );
-                    self.text.drain(start..end);
-                    self.cursor.selection_anchor = None;
-                    pos = start;
-                } else {
-                    pos = self.cursor.position;
-                }
-
-                self.text.insert(pos, char);
-                self.cursor.position = pos + 1;
+                self.delete_selection();
+                self.text.insert(self.cursor.position, char);
+                self.cursor.position += 1;
             }
             KeyCode::Backspace => {
-                if let Some(anchor) = self.cursor.selection_anchor {
-                    let (start, end) = (
-                        min(anchor, self.cursor.position),
-                        max(anchor, self.cursor.position),
-                    );
-                    self.text.drain(start..end);
-                    self.cursor.selection_anchor = None;
-                    self.cursor.position = start;
-                } else if self.cursor.position > 0 {
+                // delete selection if there is one, else delete char to the left
+                if self.delete_selection() {
+                    return;
+                }
+
+                if self.cursor.position > 0 {
                     self.text.remove(self.cursor.position - 1);
                     self.cursor.position -= 1;
+                }
+            }
+            KeyCode::Delete => {
+                // delete selection if there is one, else delete char to the right
+                if self.delete_selection() {
+                    return;
+                }
+
+                if self.cursor.position < self.text.len() {
+                    self.text.remove(self.cursor.position);
                 }
             }
             KeyCode::Left => {
@@ -191,6 +119,69 @@ impl TextBox {
             }
             _ => {}
         }
+    }
+
+    fn handle_shortcut(&mut self, char: char, modifiers: KeyModifiers) -> bool {
+        if !modifiers.contains(KeyModifiers::CONTROL) {
+            return false;
+        }
+
+        match char {
+            'a' => {
+                // select all
+                self.cursor.selection_anchor = Some(0);
+                self.cursor.position = self.text.len();
+            }
+            'c' => {
+                // copy selection to clipboard
+                if let Some(selection) = self.get_selection() {
+                    clipboard::set_text(selection);
+                }
+            }
+            'x' => {
+                // cut selection to clipboard
+                if let Some(selection) = self.get_selection() {
+                    clipboard::set_text(selection);
+                    self.delete_selection();
+                }
+            }
+            'v' => {
+                // paste from clipboard
+                self.delete_selection();
+                let clipboard_text = clipboard::get_text();
+                self.text.insert_str(self.cursor.position, &clipboard_text);
+                self.cursor.position += clipboard_text.len();
+            }
+            _ => return false,
+        }
+
+        true
+    }
+
+    fn get_selection_range(&self) -> Option<(usize, usize)> {
+        self.cursor.selection_anchor.map(|anchor| {
+            (
+                min(anchor, self.cursor.position),
+                max(anchor, self.cursor.position),
+            )
+        })
+    }
+
+    fn get_selection(&self) -> Option<String> {
+        let (start, end) = self.get_selection_range()?;
+        Some(self.text[start..end].to_string())
+    }
+
+    fn delete_selection(&mut self) -> bool {
+        let Some((start, end)) = self.get_selection_range() else {
+            return false;
+        };
+
+        self.text.drain(start..end);
+        self.cursor.selection_anchor = None;
+        self.cursor.position = start;
+
+        true
     }
 }
 
