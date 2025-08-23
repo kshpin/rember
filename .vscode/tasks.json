@@ -12,6 +12,18 @@
                 "cwd": "${workspaceFolder}/backend"
             },
             "label": "rember: build backend"
+        },
+        {
+            "type": "cargo",
+            "command": "build",
+            "problemMatcher": [
+                "$rustc"
+            ],
+            "group": "build",
+            "options": {
+                "cwd": "${workspaceFolder}/clients/tui"
+            },
+            "label": "rember: build tui"
         }
     ]
 }

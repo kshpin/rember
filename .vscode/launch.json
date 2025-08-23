@@ -5,12 +5,24 @@
             "type": "lldb",
             "request": "launch",
             "name": "Debug rember-backend",
-            "program": "${workspaceFolder}/backend/target/debug/rember-backend",
+            "program": "${workspaceFolder}/target/debug/rember-backend",
             "args": [],
             "cwd": "${workspaceFolder}/backend",
             "preLaunchTask": "rember: build backend",
             "sourceMap": {
                 ".": "${workspaceFolder}/backend"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug rember-tui",
+            "program": "${workspaceFolder}/target/debug/rember-tui",
+            "args": [],
+            "cwd": "${workspaceFolder}/clients/tui",
+            "preLaunchTask": "rember: build tui",
+            "sourceMap": {
+                ".": "${workspaceFolder}/clients/tui"
             }
         }
     ]
