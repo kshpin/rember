@@ -24,6 +24,9 @@ services:
       - dev-network
     volumes:
       - ..:/workspace
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    environment:
+      - DISPLAY=:0
 
 networks:
   dev-network:

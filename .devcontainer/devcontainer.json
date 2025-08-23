@@ -6,6 +6,7 @@
     "containerEnv": {
         "DATABASE_URL": "postgres://postgres:postgres@postgres:5432/rember_db"
     },
+    "initializeCommand": "xhost local:root",
     "shutdownAction": "stopCompose",
     "customizations": {
         "vscode": {
