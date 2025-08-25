@@ -13,9 +13,10 @@ mod text_box;
 #[tokio::main]
 async fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
-    App::new().run().await
+    App::default().run().await
 }
 
+#[derive(Default)]
 pub struct App {
     running: bool,
     crossterm_event_stream: EventStream,
@@ -26,15 +27,6 @@ pub struct App {
 }
 
 impl App {
-    pub fn new() -> Self {
-        Self {
-            running: false,
-            crossterm_event_stream: EventStream::default(),
-            search_box: TextBox::new(),
-            websocket_client: WebSocketClient::new(),
-        }
-    }
-
     pub async fn run(mut self) -> Result<()> {
         let Ok((outgoing_thread, incoming_thread)) = self
             .websocket_client
@@ -60,11 +52,5 @@ impl App {
 
     fn quit(&mut self) {
         self.running = false;
-    }
-}
-
-impl Default for App {
-    fn default() -> Self {
-        Self::new()
     }
 }

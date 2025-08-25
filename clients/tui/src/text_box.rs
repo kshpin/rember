@@ -9,19 +9,13 @@ pub struct Cursor {
     pub selection_anchor: Option<usize>,
 }
 
+#[derive(Debug, Clone, Default)]
 pub struct TextBox {
     pub text: String,
     pub cursor: Cursor,
 }
 
 impl TextBox {
-    pub fn new() -> Self {
-        Self {
-            text: String::new(),
-            cursor: Cursor::default(),
-        }
-    }
-
     pub fn handle_key_event(&mut self, key: KeyEvent) {
         match key.code {
             KeyCode::Char(char) => {
