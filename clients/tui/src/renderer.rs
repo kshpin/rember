@@ -30,13 +30,13 @@ impl Widget for &TextBox {
         let mut spans = Vec::new();
 
         for (i, c) in self.text.chars().enumerate() {
-            if let Some((selection_left, selection_right)) = selection_range
+            if i == self.cursor.position {
+                spans.push(Span::styled(c.to_string(), cursor_style));
+            } else if let Some((selection_left, selection_right)) = selection_range
                 && i >= selection_left
                 && i < selection_right
             {
                 spans.push(Span::styled(c.to_string(), selection_style));
-            } else if i == self.cursor.position {
-                spans.push(Span::styled(c.to_string(), cursor_style));
             } else {
                 spans.push(Span::raw(c.to_string()));
             }
