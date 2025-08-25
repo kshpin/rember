@@ -11,11 +11,19 @@ pub struct Cursor {
 
 #[derive(Debug, Clone, Default)]
 pub struct TextBox {
+    pub title: String,
     pub text: String,
     pub cursor: Cursor,
 }
 
 impl TextBox {
+    pub fn with_title(title: String) -> Self {
+        Self {
+            title,
+            ..Default::default()
+        }
+    }
+
     pub fn handle_key_event(&mut self, key: KeyEvent) {
         match key.code {
             KeyCode::Char(char) => {

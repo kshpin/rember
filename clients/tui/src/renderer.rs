@@ -47,7 +47,8 @@ impl Widget for &TextBox {
             spans.push(Span::styled(" ", cursor_style));
         }
 
-        let text_box = Paragraph::new(Line::from(spans)).block(Block::bordered().title("Search"));
+        let text_box =
+            Paragraph::new(Line::from(spans)).block(Block::bordered().title(self.title.clone()));
         text_box.render(area, buf);
     }
 }

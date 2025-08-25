@@ -13,7 +13,7 @@ mod text_box;
 #[tokio::main]
 async fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
-    App::default().run().await
+    App::new().run().await
 }
 
 #[derive(Default)]
@@ -24,6 +24,15 @@ pub struct App {
     search_box: TextBox,
 
     websocket_client: WebSocketClient,
+}
+
+impl App {
+    fn new() -> Self {
+        Self {
+            search_box: TextBox::with_title("Search".to_string()),
+            ..Default::default()
+        }
+    }
 }
 
 impl App {
