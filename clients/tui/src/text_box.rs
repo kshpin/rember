@@ -58,66 +58,10 @@ impl TextBox {
                 }
             }
             KeyCode::Left => {
-                if !key.modifiers.contains(KeyModifiers::SHIFT) {
-                    self.cursor.selection_anchor = None;
-                }
-
-                if self.cursor.position == 0 {
-                    return;
-                }
-
-                // if shift is held, ensure we're selecting
-                if self.cursor.selection_anchor.is_none()
-                    && key.modifiers.contains(KeyModifiers::SHIFT)
-                {
-                    self.cursor.selection_anchor = Some(self.cursor.position);
-                }
-
-                // move cursor left
-                if key.modifiers.contains(KeyModifiers::CONTROL) {
-                    self.cursor.position =
-                        get_next_word_bound(&self.text, self.cursor.position, false);
-                } else {
-                    self.cursor.position -= 1;
-                }
-
-                // if we return to the anchor, we're no longer selecting
-                if let Some(anchor) = self.cursor.selection_anchor
-                    && self.cursor.position == anchor
-                {
-                    self.cursor.selection_anchor = None;
-                }
+                self.handle_horizontal_move(false, key.modifiers);
             }
             KeyCode::Right => {
-                if !key.modifiers.contains(KeyModifiers::SHIFT) {
-                    self.cursor.selection_anchor = None;
-                }
-
-                if self.cursor.position == self.text.len() {
-                    return;
-                }
-
-                // if shift is held, ensure we're selecting text
-                if self.cursor.selection_anchor.is_none()
-                    && key.modifiers.contains(KeyModifiers::SHIFT)
-                {
-                    self.cursor.selection_anchor = Some(self.cursor.position);
-                }
-
-                // move cursor right
-                if key.modifiers.contains(KeyModifiers::CONTROL) {
-                    self.cursor.position =
-                        get_next_word_bound(&self.text, self.cursor.position, true);
-                } else {
-                    self.cursor.position += 1;
-                }
-
-                // if we return to the anchor, we're no longer selecting text
-                if let Some(anchor) = self.cursor.selection_anchor
-                    && self.cursor.position == anchor
-                {
-                    self.cursor.selection_anchor = None;
-                }
+                self.handle_horizontal_move(true, key.modifiers);
             }
             _ => {}
         }
@@ -158,6 +102,51 @@ impl TextBox {
         }
 
         true
+    }
+
+    fn handle_horizontal_move(&mut self, direction_right: bool, modifiers: KeyModifiers) {
+        let selecting = modifiers.contains(KeyModifiers::SHIFT);
+
+        // if not selecting and we have a selection, collapse to the respective edge
+        if !selecting {
+            if let Some((start, end)) = self.get_selection_range() {
+                self.cursor.position = if direction_right { end } else { start };
+                self.cursor.selection_anchor = None;
+                return;
+            }
+            // ensure selection cleared when moving without Shift
+            self.cursor.selection_anchor = None;
+        } else if self.cursor.selection_anchor.is_none() {
+            // starting selection: anchor at current position
+            self.cursor.selection_anchor = Some(self.cursor.position);
+        }
+
+        // bounds
+        if (!direction_right && self.cursor.position == 0)
+            || (direction_right && self.cursor.position == self.text.len())
+        {
+            // if we just started selecting into a bound, cancel selection
+            if selecting && self.cursor.selection_anchor == Some(self.cursor.position) {
+                self.cursor.selection_anchor = None;
+            }
+            return;
+        }
+
+        // move by word or char
+        self.cursor.position = if modifiers.contains(KeyModifiers::CONTROL) {
+            get_next_word_bound(&self.text, self.cursor.position, direction_right)
+        } else if direction_right {
+            self.cursor.position + 1
+        } else {
+            self.cursor.position - 1
+        };
+
+        // if we returned to the anchor while selecting, stop selecting
+        if let Some(anchor) = self.cursor.selection_anchor
+            && self.cursor.position == anchor
+        {
+            self.cursor.selection_anchor = None;
+        }
     }
 
     fn get_selection_range(&self) -> Option<(usize, usize)> {
