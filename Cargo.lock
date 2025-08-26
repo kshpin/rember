@@ -1859,6 +1859,7 @@ dependencies = [
  "chrono",
  "dotenvy",
  "futures",
+ "rust_shared",
  "serde",
  "serde_json",
  "sqlx",
@@ -1878,13 +1879,10 @@ dependencies = [
  "crossterm 0.29.0",
  "futures",
  "ratatui",
+ "rust_shared",
  "tokio",
  "tokio-tungstenite",
 ]
-
-[[package]]
-name = "rember_rust_shared"
-version = "0.1.0"
 
 [[package]]
 name = "ring"
@@ -1918,6 +1916,14 @@ dependencies = [
  "spki",
  "subtle",
  "zeroize",
+]
+
+[[package]]
+name = "rust_shared"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

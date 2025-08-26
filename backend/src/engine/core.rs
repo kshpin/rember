@@ -1,43 +1,8 @@
 use crate::engine::database::Database;
-use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use tokio_tungstenite::tungstenite::Utf8Bytes;
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct TestStruct {
-    pub field1: String,
-    pub field2: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct CreateNote {
-    pub text: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct GetNotes {
-    pub limit: Option<u32>,
-    pub offset: Option<u32>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct GetNotesFiltered {
-    pub search_text: Option<String>,
-    pub tags: Vec<String>,
-    pub limit: Option<u32>,
-    pub offset: Option<u32>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(tag = "type", content = "data")]
-#[serde(rename_all = "snake_case")]
-pub enum Message {
-    CreateNote(CreateNote),
-    GetNotes(GetNotes),
-    GetNotesFiltered(GetNotesFiltered),
-    Test(TestStruct),
-    Unknown(String),
-}
+use rust_shared as shared;
 
 #[derive(Clone)]
 pub struct Engine {
@@ -72,7 +37,7 @@ impl Engine {
         let parsed_message = serde_json::from_str(&msg).map_err(|e| e.to_string())?;
 
         match parsed_message {
-            Message::CreateNote(create_note) => {
+            shared::Message::CreateNote(create_note) => {
                 match self.database.create_note(&create_note.text).await {
                     Ok(note) => serde_json::to_string(&note)
                         .map(|json| json.into())
@@ -80,13 +45,13 @@ impl Engine {
                     Err(e) => Err(e.to_string()),
                 }
             }
-            Message::GetNotes(_get_notes) => match self.database.get_all_notes().await {
+            shared::Message::GetNotes(_get_notes) => match self.database.get_all_notes().await {
                 Ok(notes) => serde_json::to_string(&notes)
                     .map(|json| json.into())
                     .map_err(|e| e.to_string()),
                 Err(e) => Err(e.to_string()),
             },
-            Message::GetNotesFiltered(GetNotesFiltered {
+            shared::Message::GetNotesFiltered(shared::GetNotesFiltered {
                 search_text,
                 tags,
                 limit,
@@ -101,11 +66,11 @@ impl Engine {
                     .map_err(|e| e.to_string()),
                 Err(e) => Err(e.to_string()),
             },
-            Message::Test(test_struct) => {
+            shared::Message::Test(test_struct) => {
                 println!("Received test message: {test_struct:?}");
                 Ok("".into())
             }
-            Message::Unknown(msg_type) => {
+            shared::Message::Unknown(msg_type) => {
                 println!("Unknown message type: {msg_type}");
                 Ok(msg)
             }
