@@ -6,7 +6,7 @@ use ratatui::{
 };
 use std::cmp::{max, min};
 
-use crate::{App, TextBox};
+use crate::{App, InteractiveTextBox, TextBox};
 
 impl Widget for &App {
     fn render(self, area: Rect, buf: &mut Buffer) {
@@ -20,6 +20,14 @@ impl Widget for &App {
 
 impl Widget for &TextBox {
     fn render(self, area: Rect, buf: &mut Buffer) {
+        let text_box =
+            Paragraph::new(self.text.clone()).block(Block::bordered().title(self.title.clone()));
+        text_box.render(area, buf);
+    }
+}
+
+impl Widget for &InteractiveTextBox {
+    fn render(self, area: Rect, buf: &mut Buffer) {
         let cursor_style = Style::default().bg(Color::White);
         let selection_style = Style::default().bg(Color::LightGreen);
         let selection_cursor_style = Style::default().bg(Color::Yellow);
@@ -32,7 +40,7 @@ impl Widget for &TextBox {
         });
 
         let mut spans = Vec::new();
-        for (i, c) in self.text.chars().enumerate() {
+        for (i, c) in self.text_box.text.chars().enumerate() {
             if i == self.cursor.position {
                 let style = if let Some((selection_left, _)) = selection_range
                     && i == selection_left
@@ -53,12 +61,12 @@ impl Widget for &TextBox {
         }
 
         // render cursor if it's at the end of the text
-        if self.cursor.position == self.text.len() {
+        if self.cursor.position == self.text_box.text.len() {
             spans.push(Span::styled(" ", cursor_style));
         }
 
-        let text_box =
-            Paragraph::new(Line::from(spans)).block(Block::bordered().title(self.title.clone()));
+        let text_box = Paragraph::new(Line::from(spans))
+            .block(Block::bordered().title(self.text_box.title.clone()));
         text_box.render(area, buf);
     }
 }

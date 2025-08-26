@@ -13,6 +13,11 @@ pub struct Cursor {
 pub struct TextBox {
     pub title: String,
     pub text: String,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct InteractiveTextBox {
+    pub text_box: TextBox,
     pub cursor: Cursor,
 }
 
@@ -20,6 +25,26 @@ impl TextBox {
     pub fn with_title(title: String) -> Self {
         Self {
             title,
+            ..Default::default()
+        }
+    }
+
+    pub fn with_text(text: String) -> Self {
+        Self {
+            text,
+            ..Default::default()
+        }
+    }
+
+    pub fn with_title_and_text(title: String, text: String) -> Self {
+        Self { title, text }
+    }
+}
+
+impl InteractiveTextBox {
+    pub fn with_title(title: String) -> Self {
+        Self {
+            text_box: TextBox::with_title(title),
             ..Default::default()
         }
     }
@@ -33,7 +58,7 @@ impl TextBox {
 
                 // add char to search text at cursor position
                 self.delete_selection();
-                self.text.insert(self.cursor.position, char);
+                self.text_box.text.insert(self.cursor.position, char);
                 self.cursor.position += 1;
             }
             KeyCode::Backspace => {
@@ -43,7 +68,7 @@ impl TextBox {
                 }
 
                 if self.cursor.position > 0 {
-                    self.text.remove(self.cursor.position - 1);
+                    self.text_box.text.remove(self.cursor.position - 1);
                     self.cursor.position -= 1;
                 }
             }
@@ -53,8 +78,8 @@ impl TextBox {
                     return;
                 }
 
-                if self.cursor.position < self.text.len() {
-                    self.text.remove(self.cursor.position);
+                if self.cursor.position < self.text_box.text.len() {
+                    self.text_box.text.remove(self.cursor.position);
                 }
             }
             KeyCode::Left => {
@@ -76,7 +101,7 @@ impl TextBox {
             'a' => {
                 // select all
                 self.cursor.selection_anchor = Some(0);
-                self.cursor.position = self.text.len();
+                self.cursor.position = self.text_box.text.len();
             }
             'c' => {
                 // copy selection to clipboard
@@ -95,7 +120,9 @@ impl TextBox {
                 // paste from clipboard
                 self.delete_selection();
                 let clipboard_text = clipboard::get_text();
-                self.text.insert_str(self.cursor.position, &clipboard_text);
+                self.text_box
+                    .text
+                    .insert_str(self.cursor.position, &clipboard_text);
                 self.cursor.position += clipboard_text.len();
             }
             _ => return false,
@@ -123,7 +150,7 @@ impl TextBox {
 
         // bounds
         if (!direction_right && self.cursor.position == 0)
-            || (direction_right && self.cursor.position == self.text.len())
+            || (direction_right && self.cursor.position == self.text_box.text.len())
         {
             // if we just started selecting into a bound, cancel selection
             if selecting && self.cursor.selection_anchor == Some(self.cursor.position) {
@@ -134,7 +161,7 @@ impl TextBox {
 
         // move by word or char
         self.cursor.position = if modifiers.contains(KeyModifiers::CONTROL) {
-            get_next_word_bound(&self.text, self.cursor.position, direction_right)
+            get_next_word_bound(&self.text_box.text, self.cursor.position, direction_right)
         } else if direction_right {
             self.cursor.position + 1
         } else {
@@ -160,7 +187,7 @@ impl TextBox {
 
     fn get_selection(&self) -> Option<String> {
         let (start, end) = self.get_selection_range()?;
-        Some(self.text[start..end].to_string())
+        Some(self.text_box.text[start..end].to_string())
     }
 
     fn delete_selection(&mut self) -> bool {
@@ -168,7 +195,7 @@ impl TextBox {
             return false;
         };
 
-        self.text.drain(start..end);
+        self.text_box.text.drain(start..end);
         self.cursor.selection_anchor = None;
         self.cursor.position = start;
 

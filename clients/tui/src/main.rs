@@ -2,7 +2,7 @@ use client::websocket::WebSocketClient;
 use color_eyre::Result;
 use crossterm::event::EventStream;
 use std::sync::LazyLock;
-use text_box::TextBox;
+use text_box::{InteractiveTextBox, TextBox};
 
 mod client;
 mod clipboard;
@@ -26,7 +26,7 @@ pub struct App {
     running: bool,
     crossterm_event_stream: EventStream,
 
-    search_box: TextBox,
+    search_box: InteractiveTextBox,
     response_box: TextBox,
 
     websocket_client: WebSocketClient,
@@ -35,7 +35,7 @@ pub struct App {
 impl App {
     fn new() -> Self {
         Self {
-            search_box: TextBox::with_title("Search".to_string()),
+            search_box: InteractiveTextBox::with_title("Search".to_string()),
             ..Default::default()
         }
     }
