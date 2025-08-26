@@ -1,6 +1,9 @@
+use color_eyre::eyre::Result as ColorResult;
 use futures::{SinkExt, stream::StreamExt};
 use tokio::{sync::mpsc, task::JoinHandle};
 use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
+
+use rust_shared as shared;
 
 #[derive(Debug, Default)]
 pub struct WebSocketClient {
@@ -19,9 +22,9 @@ impl WebSocketClient {
     pub async fn connect_and_run(
         &mut self,
         url: &str,
-    ) -> Result<(JoinHandle<()>, JoinHandle<()>), Box<dyn std::error::Error>> {
-        let (app_to_server_tx, mut app_to_server_rx) = mpsc::channel::<String>(100);
-        let (server_to_app_tx, server_to_app_rx) = mpsc::channel::<String>(100);
+    ) -> ColorResult<(JoinHandle<()>, JoinHandle<()>)> {
+        let (app_to_server_tx, mut app_to_server_rx) = mpsc::channel(100);
+        let (server_to_app_tx, server_to_app_rx) = mpsc::channel(100);
 
         self.app_to_server_tx = Some(app_to_server_tx);
         self.server_to_app_rx = Some(server_to_app_rx);
@@ -54,21 +57,33 @@ impl WebSocketClient {
         Ok((outgoing_thread, incoming_thread))
     }
 
-    pub async fn send(&self, message: String) -> Result<(), mpsc::error::SendError<String>> {
+    pub async fn send(&self, message: shared::MessageRequest) -> ColorResult<()> {
         let Some(app_to_server_tx) = &self.app_to_server_tx else {
-            return Err(mpsc::error::SendError(
-                "send channel doesn't exist".to_string(),
-            ));
+            return Ok(());
         };
 
-        app_to_server_tx.send(message).await
+        let msg_text = serialize_request(message);
+        app_to_server_tx.send(msg_text).await.map_err(|e| e.into())
     }
 
-    pub async fn recv(&mut self) -> Option<String> {
+    pub async fn recv(&mut self) -> Option<shared::MessageResponse> {
         let Some(server_to_app_rx) = &mut self.server_to_app_rx else {
             return None;
         };
 
-        server_to_app_rx.recv().await
+        let msg_text = server_to_app_rx.recv().await?;
+        let msg = serde_json::from_str(&msg_text).ok()?;
+        Some(msg)
     }
+}
+
+fn serialize_request(request: shared::MessageRequest) -> String {
+    let serialize = if *crate::DEV {
+        serde_json::to_string_pretty
+    } else {
+        serde_json::to_string
+    };
+
+    // this should never fail
+    serialize(&request).expect("failed to serialize request")
 }

@@ -1880,6 +1880,8 @@ dependencies = [
  "futures",
  "ratatui",
  "rust_shared",
+ "serde",
+ "serde_json",
  "tokio",
  "tokio-tungstenite",
 ]

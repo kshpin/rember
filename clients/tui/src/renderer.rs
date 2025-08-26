@@ -12,6 +12,9 @@ impl Widget for &App {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let search_area = Rect::new(0, 0, area.width, 3).clamp(area);
         self.search_box.render(search_area, buf);
+
+        let response_area = Rect::new(0, 3, area.width, area.height - 3).clamp(area);
+        self.response_box.render(response_area, buf);
     }
 }
 

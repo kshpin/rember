@@ -1,6 +1,7 @@
 use client::websocket::WebSocketClient;
 use color_eyre::Result;
 use crossterm::event::EventStream;
+use std::sync::LazyLock;
 use text_box::TextBox;
 
 mod client;
@@ -9,6 +10,10 @@ mod events;
 mod keys;
 mod renderer;
 mod text_box;
+
+// set develop flag
+pub static DEV: LazyLock<bool> =
+    LazyLock::new(|| std::env::var("RUST_BACKTRACE").unwrap_or("0".to_string()) == "1");
 
 #[tokio::main]
 async fn main() -> color_eyre::Result<()> {
@@ -22,6 +27,7 @@ pub struct App {
     crossterm_event_stream: EventStream,
 
     search_box: TextBox,
+    response_box: TextBox,
 
     websocket_client: WebSocketClient,
 }

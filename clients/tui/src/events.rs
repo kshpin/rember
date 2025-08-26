@@ -4,6 +4,8 @@ use futures::{FutureExt, StreamExt};
 
 use crate::App;
 
+use rust_shared as shared;
+
 impl App {
     pub async fn handle_events(&mut self) -> Result<()> {
         tokio::select! {
@@ -27,9 +29,9 @@ impl App {
         }
     }
 
-    async fn handle_websocket_message(&mut self, message: Option<String>) {
+    async fn handle_websocket_message(&mut self, message: Option<shared::MessageResponse>) {
         if let Some(message) = message {
-            println!("Received message from backend: {message}");
+            self.response_box.text = format!("{message:?}");
         }
     }
 }

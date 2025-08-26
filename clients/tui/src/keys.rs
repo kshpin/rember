@@ -1,5 +1,7 @@
 use crossterm::event::{KeyCode, KeyEvent};
 
+use rust_shared as shared;
+
 use crate::App;
 
 impl App {
@@ -9,6 +11,13 @@ impl App {
         }
 
         self.search_box.handle_key_event(key);
+        self.websocket_client
+            .send(shared::MessageRequest::Test(rust_shared::TestStruct {
+                field1: "abc".to_string(),
+                field2: "def".to_string(),
+            }))
+            .await
+            .expect("msg");
     }
 
     fn maybe_navigate(&mut self, key: KeyEvent) -> bool {
