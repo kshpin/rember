@@ -1,4 +1,4 @@
-use color_eyre::eyre::Result as ColorResult;
+use color_eyre::Result;
 use futures::{SinkExt, stream::StreamExt};
 use tokio::{sync::mpsc, task::JoinHandle};
 use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
@@ -19,10 +19,7 @@ impl WebSocketClient {
         }
     }
 
-    pub async fn connect_and_run(
-        &mut self,
-        url: &str,
-    ) -> ColorResult<(JoinHandle<()>, JoinHandle<()>)> {
+    pub async fn connect_and_run(&mut self, url: &str) -> Result<(JoinHandle<()>, JoinHandle<()>)> {
         let (app_to_server_tx, mut app_to_server_rx) = mpsc::channel(100);
         let (server_to_app_tx, server_to_app_rx) = mpsc::channel(100);
 
@@ -57,7 +54,7 @@ impl WebSocketClient {
         Ok((outgoing_thread, incoming_thread))
     }
 
-    pub async fn send(&self, message: shared::MessageRequest) -> ColorResult<()> {
+    pub async fn send(&self, message: shared::MessageRequest) -> Result<()> {
         let Some(app_to_server_tx) = &self.app_to_server_tx else {
             return Ok(());
         };
