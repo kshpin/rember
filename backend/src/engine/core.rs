@@ -33,21 +33,21 @@ impl Engine {
     ///     }
     /// }
     /// ```
-    pub async fn handle_message(&self, msg: shared::MessageRequest) -> shared::MessageResponse {
+    pub async fn handle_message(&self, msg: shared::request::Message) -> shared::response::Message {
         match msg {
-            shared::MessageRequest::CreateNote(create_note) => {
+            shared::request::Message::CreateNote(create_note) => {
                 match self.database.create_note(&create_note.text).await {
-                    Ok(note) => shared::MessageResponse::Unknown("note created".to_string()),
-                    Err(e) => shared::MessageResponse::Unknown(e.to_string()),
+                    Ok(note) => shared::response::Message::Unknown("note created".to_string()),
+                    Err(e) => shared::response::Message::Unknown(e.to_string()),
                 }
             }
-            shared::MessageRequest::GetNotes(_get_notes) => {
+            shared::request::Message::GetNotes(_get_notes) => {
                 match self.database.get_all_notes().await {
-                    Ok(notes) => shared::MessageResponse::Unknown("notes fetched".to_string()),
-                    Err(e) => shared::MessageResponse::Unknown(e.to_string()),
+                    Ok(notes) => shared::response::Message::Unknown("notes fetched".to_string()),
+                    Err(e) => shared::response::Message::Unknown(e.to_string()),
                 }
             }
-            shared::MessageRequest::GetNotesFiltered(shared::GetNotesFiltered {
+            shared::request::Message::GetNotesFiltered(shared::request::GetNotesFiltered {
                 search_text,
                 tags,
                 limit,
@@ -57,16 +57,16 @@ impl Engine {
                 .get_notes_filtered(search_text, tags, limit, offset)
                 .await
             {
-                Ok(notes) => shared::MessageResponse::Unknown("notes fetched".to_string()),
-                Err(e) => shared::MessageResponse::Unknown(e.to_string()),
+                Ok(notes) => shared::response::Message::Unknown("notes fetched".to_string()),
+                Err(e) => shared::response::Message::Unknown(e.to_string()),
             },
-            shared::MessageRequest::Test(test_struct) => {
+            shared::request::Message::Test(test_struct) => {
                 println!("Received test message: {test_struct:?}");
-                shared::MessageResponse::Unknown("test message received".to_string())
+                shared::response::Message::Unknown("test message received".to_string())
             }
-            shared::MessageRequest::Unknown(msg_type) => {
+            shared::request::Message::Unknown(msg_type) => {
                 println!("Unknown message type: {msg_type}");
-                shared::MessageResponse::Unknown(msg_type)
+                shared::response::Message::Unknown(msg_type)
             }
         }
     }

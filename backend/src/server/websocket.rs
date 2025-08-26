@@ -7,8 +7,8 @@ use rust_shared as shared;
 
 pub async fn handle_websocket<F, Fut>(raw_stream: TcpStream, handle_message: F)
 where
-    F: Fn(shared::MessageRequest) -> Fut + Send + Sync + Clone + 'static,
-    Fut: Future<Output = shared::MessageResponse> + Send + 'static,
+    F: Fn(shared::request::Message) -> Fut + Send + Sync + Clone + 'static,
+    Fut: Future<Output = shared::response::Message> + Send + 'static,
 {
     let ws_stream = accept_async(raw_stream).await.expect("accept_async failed");
     let (mut outgoing, mut incoming) = ws_stream.split();
@@ -34,7 +34,7 @@ where
             }
             Err(e) => {
                 warn!("error parsing message: {e:?}");
-                shared::MessageRequest::Unknown(text.to_string())
+                shared::request::Message::Unknown(text.to_string())
             }
         };
 
@@ -50,7 +50,7 @@ where
     }
 }
 
-fn serialize_response(response: shared::MessageResponse) -> String {
+fn serialize_response(response: shared::response::Message) -> String {
     let serialize = if *crate::DEV {
         serde_json::to_string_pretty
     } else {

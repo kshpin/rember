@@ -29,7 +29,7 @@ impl App {
         }
     }
 
-    async fn handle_websocket_message(&mut self, message: Option<shared::MessageResponse>) {
+    async fn handle_websocket_message(&mut self, message: Option<shared::response::Message>) {
         if let Some(message) = message {
             self.response_box.text = format!("{message:?}");
         }

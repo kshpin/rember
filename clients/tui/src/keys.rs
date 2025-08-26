@@ -12,10 +12,14 @@ impl App {
 
         self.search_box.handle_key_event(key);
         self.websocket_client
-            .send(shared::MessageRequest::Test(rust_shared::TestStruct {
-                field1: "abc".to_string(),
-                field2: "def".to_string(),
-            }))
+            .send(shared::request::Message::GetNotesFiltered(
+                shared::request::GetNotesFiltered {
+                    search_text: None,
+                    tags: vec![],
+                    limit: Some(10),
+                    offset: Some(0),
+                },
+            ))
             .await
             .expect("msg");
     }
