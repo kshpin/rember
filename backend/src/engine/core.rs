@@ -33,25 +33,21 @@ impl Engine {
     ///     }
     /// }
     /// ```
-    pub async fn handle_message(&self, msg: Utf8Bytes) -> Result<Utf8Bytes, String> {
-        let parsed_message = serde_json::from_str(&msg).map_err(|e| e.to_string())?;
-
-        match parsed_message {
-            shared::Message::CreateNote(create_note) => {
+    pub async fn handle_message(&self, msg: shared::MessageRequest) -> shared::MessageResponse {
+        match msg {
+            shared::MessageRequest::CreateNote(create_note) => {
                 match self.database.create_note(&create_note.text).await {
-                    Ok(note) => serde_json::to_string(&note)
-                        .map(|json| json.into())
-                        .map_err(|e| e.to_string()),
-                    Err(e) => Err(e.to_string()),
+                    Ok(note) => shared::MessageResponse::Unknown("note created".to_string()),
+                    Err(e) => shared::MessageResponse::Unknown(e.to_string()),
                 }
             }
-            shared::Message::GetNotes(_get_notes) => match self.database.get_all_notes().await {
-                Ok(notes) => serde_json::to_string(&notes)
-                    .map(|json| json.into())
-                    .map_err(|e| e.to_string()),
-                Err(e) => Err(e.to_string()),
-            },
-            shared::Message::GetNotesFiltered(shared::GetNotesFiltered {
+            shared::MessageRequest::GetNotes(_get_notes) => {
+                match self.database.get_all_notes().await {
+                    Ok(notes) => shared::MessageResponse::Unknown("notes fetched".to_string()),
+                    Err(e) => shared::MessageResponse::Unknown(e.to_string()),
+                }
+            }
+            shared::MessageRequest::GetNotesFiltered(shared::GetNotesFiltered {
                 search_text,
                 tags,
                 limit,
@@ -61,18 +57,16 @@ impl Engine {
                 .get_notes_filtered(search_text, tags, limit, offset)
                 .await
             {
-                Ok(notes) => serde_json::to_string(&notes)
-                    .map(|json| json.into())
-                    .map_err(|e| e.to_string()),
-                Err(e) => Err(e.to_string()),
+                Ok(notes) => shared::MessageResponse::Unknown("notes fetched".to_string()),
+                Err(e) => shared::MessageResponse::Unknown(e.to_string()),
             },
-            shared::Message::Test(test_struct) => {
+            shared::MessageRequest::Test(test_struct) => {
                 println!("Received test message: {test_struct:?}");
-                Ok("".into())
+                shared::MessageResponse::Unknown("test message received".to_string())
             }
-            shared::Message::Unknown(msg_type) => {
+            shared::MessageRequest::Unknown(msg_type) => {
                 println!("Unknown message type: {msg_type}");
-                Ok(msg)
+                shared::MessageResponse::Unknown(msg_type)
             }
         }
     }

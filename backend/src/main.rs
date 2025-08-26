@@ -1,6 +1,12 @@
 mod engine;
 mod server;
 
+use std::sync::LazyLock;
+
+// set develop flag
+pub static DEV: LazyLock<bool> =
+    LazyLock::new(|| std::env::var("RUST_BACKTRACE").unwrap_or("0".to_string()) == "1");
+
 #[tokio::main]
 async fn main() {
     // only for `cargo run` development

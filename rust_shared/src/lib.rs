@@ -28,10 +28,17 @@ pub struct GetNotesFiltered {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type", content = "data")]
 #[serde(rename_all = "snake_case")]
-pub enum Message {
+pub enum MessageRequest {
     CreateNote(CreateNote),
     GetNotes(GetNotes),
     GetNotesFiltered(GetNotesFiltered),
     Test(TestStruct),
+    Unknown(String),
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(tag = "type", content = "data")]
+#[serde(rename_all = "snake_case")]
+pub enum MessageResponse {
     Unknown(String),
 }
