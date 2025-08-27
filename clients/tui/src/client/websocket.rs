@@ -3,7 +3,7 @@ use futures::{SinkExt, stream::StreamExt};
 use tokio::{sync::mpsc, task::JoinHandle};
 use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
 
-use rust_shared::{request, response};
+use rust_shared::{deserialize, request, response, serialize};
 
 #[derive(Debug, Default)]
 pub struct WebSocketClient {
@@ -59,7 +59,7 @@ impl WebSocketClient {
             return Ok(());
         };
 
-        let msg_text = serialize_request(message);
+        let msg_text = serialize(message, *crate::DEV);
         app_to_server_tx.send(msg_text).await.map_err(|e| e.into())
     }
 
@@ -69,18 +69,7 @@ impl WebSocketClient {
         };
 
         let msg_text = server_to_app_rx.recv().await?;
-        let msg = serde_json::from_str(&msg_text).ok()?;
+        let msg = deserialize(&msg_text).ok()?;
         Some(msg)
     }
-}
-
-fn serialize_request(request: request::Message) -> String {
-    let serialize = if *crate::DEV {
-        serde_json::to_string_pretty
-    } else {
-        serde_json::to_string
-    };
-
-    // this should never fail
-    serialize(&request).expect("failed to serialize request")
 }

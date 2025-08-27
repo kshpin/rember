@@ -3,7 +3,7 @@ use tokio::net::TcpStream;
 use tokio_tungstenite::{accept_async, tungstenite::protocol::Message};
 use tracing::{debug, info, warn};
 
-use rust_shared::{request, response};
+use rust_shared::{deserialize, request, response, serialize};
 
 pub async fn handle_websocket<F, Fut>(raw_stream: TcpStream, handle_message: F)
 where
@@ -27,7 +27,7 @@ where
         debug!("received message: {}", text);
 
         // parse message
-        let parsed_message = match serde_json::from_str(&text) {
+        let parsed_message = match deserialize(&text) {
             Ok(parsed_message) => {
                 info!("parsed message: {parsed_message:?}");
                 parsed_message
@@ -41,22 +41,11 @@ where
         let response = handle_message(parsed_message).await;
 
         // serialize response
-        let response_text = serialize_response(response);
+        let response_text = serialize(response, *crate::DEV);
 
         outgoing
             .send(Message::Text(response_text.into()))
             .await
             .expect("failed to send message");
     }
-}
-
-fn serialize_response(response: response::Message) -> String {
-    let serialize = if *crate::DEV {
-        serde_json::to_string_pretty
-    } else {
-        serde_json::to_string
-    };
-
-    // this should never fail
-    serialize(&response).expect("failed to serialize response")
 }

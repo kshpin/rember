@@ -1860,8 +1860,6 @@ dependencies = [
  "dotenvy",
  "futures",
  "rust_shared",
- "serde",
- "serde_json",
  "sqlx",
  "tokio",
  "tokio-tungstenite",
@@ -1880,8 +1878,6 @@ dependencies = [
  "futures",
  "ratatui",
  "rust_shared",
- "serde",
- "serde_json",
  "tokio",
  "tokio-tungstenite",
 ]

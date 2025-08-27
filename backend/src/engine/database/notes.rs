@@ -1,12 +1,11 @@
 use chrono::NaiveDateTime;
-use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool, Result, query_builder::QueryBuilder};
 use uuid::Uuid;
 
 // add import for tags
 use super::tags::Tag;
 
-#[derive(Serialize, Deserialize, Debug, Clone, FromRow)]
+#[derive(Debug, Clone, FromRow)]
 pub struct Note {
     pub id: Uuid,
     pub text: String,

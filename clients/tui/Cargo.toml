@@ -13,7 +13,5 @@ tokio = { version = "1.47.1", features = ["full"] }
 tokio-tungstenite = { version = "0.27.0", features = [
     "rustls-tls-native-roots",
 ] }
-serde = { version = "1.0.219", features = ["derive"] }
-serde_json = { version = "1.0.141" }
 futures = "0.3.31"
 clipboard-rs = "0.3.0"
