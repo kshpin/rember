@@ -4,7 +4,7 @@ use futures::{FutureExt, StreamExt};
 
 use crate::App;
 
-use rust_shared as shared;
+use rust_shared::response;
 
 impl App {
     pub async fn handle_events(&mut self) -> Result<()> {
@@ -29,7 +29,7 @@ impl App {
         }
     }
 
-    async fn handle_websocket_message(&mut self, message: Option<shared::response::Message>) {
+    async fn handle_websocket_message(&mut self, message: Option<response::Message>) {
         if let Some(message) = message {
             self.response_box.text = format!("{message:?}");
         }

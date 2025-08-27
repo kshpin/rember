@@ -1,6 +1,6 @@
 use crossterm::event::{KeyCode, KeyEvent};
 
-use rust_shared as shared;
+use rust_shared::request;
 
 use crate::App;
 
@@ -12,8 +12,8 @@ impl App {
 
         self.search_box.handle_key_event(key);
         self.websocket_client
-            .send(shared::request::Message::GetNotesFiltered(
-                shared::request::GetNotesFiltered {
+            .send(request::Message::GetNotesFiltered(
+                request::GetNotesFiltered {
                     search_text: None,
                     tags: vec![],
                     limit: Some(10),
