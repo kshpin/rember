@@ -19,7 +19,8 @@ CREATE TABLE tags (
 );
 
 -- Create trigram index for fuzzy/typo-tolerant search on tags.name
-CREATE INDEX tags_name_trgm_idx ON tags USING GIN (name gin_trgm_ops);
+-- disabled for now because it's not real fuzzy search
+-- CREATE INDEX tags_name_trgm_idx ON tags USING GIN (name gin_trgm_ops);
 
 
 -- TABLE: Note_Tags

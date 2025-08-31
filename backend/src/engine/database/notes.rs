@@ -68,7 +68,7 @@ impl NotesRepository {
     ) -> Result<Vec<Note>> {
         sqlx::query_file_as!(
             Note,
-            "src/engine/database/queries/note_list_search.sql",
+            "queries/note_list_search.sql",
             search_text.unwrap(),
             &tags,
         )

@@ -1,0 +1,35 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "-- PARAMETERS\n-- $1: search_text          -> The text for fuzzy searching (e.g., 'databas desin').\n-- $2: search_tags          -> An array of tag names to match (e.g., ARRAY['project', 'idea']).\n\nWITH notes_with_tags AS (\n    SELECT\n        nt.note_id,\n        -- Aggregate all tag names for a note into a single array (postgres specific)\n        array_agg(t.name) as tags\n    FROM note_tags nt\n    JOIN tags t ON nt.tag_id = t.id\n    GROUP BY nt.note_id\n)\nSELECT\n    n.id,\n    n.text,\n    n.created_at\nFROM\n    notes AS n\nJOIN\n    notes_with_tags nwt ON n.id = nwt.note_id\nWHERE\n    -- 1. Check if the note's tag array contains all the search tags\n    nwt.tags @> $2\n    -- 2. Perform the fuzzy text search\n    AND n.text % $1\nORDER BY\n    -- 3. Sort by similarity score\n    similarity(n.text, $1) DESC;\n",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "text",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "created_at",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "TextArray"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "b713660c82959c6e6ee448eb5ddad0fdd3632d053079dd1253c7c65bfb201b5d"
+}
