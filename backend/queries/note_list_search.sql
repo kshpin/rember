@@ -22,8 +22,8 @@ JOIN
 WHERE
     -- 1. Check if the note's tag array contains all the search tags
     nwt.tags @> $2
-    -- 2. Perform the fuzzy text search
-    AND n.text % $1
+    -- 2. Perform the fuzzy text search only if search text is not empty
+    AND ($1 = '' OR n.text % $1)
 ORDER BY
-    -- 3. Sort by similarity score
-    similarity(n.text, $1) DESC;
+    -- 3. Sort by similarity score (use 0 if no search text)
+    CASE WHEN $1 = '' THEN 0 ELSE similarity(n.text, $1) END DESC;

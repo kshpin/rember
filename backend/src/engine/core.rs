@@ -33,13 +33,27 @@ impl Engine {
     pub async fn handle_message(&self, msg: request::Message) -> response::Message {
         match msg {
             request::Message::CreateNote(create_note) => {
-                match self.database.create_note(&create_note.text).await {
+                match self
+                    .database
+                    .create_note(&create_note.text, &create_note.tags)
+                    .await
+                {
                     Ok(note) => response::Message::Notes(vec![note]),
+                    Err(e) => response::Message::Unknown(e.to_string()),
+                }
+            }
+            request::Message::CreateTag(create_tag) => {
+                match self.database.create_tag(&create_tag.name).await {
+                    Ok(tag) => response::Message::Tags(vec![tag]),
                     Err(e) => response::Message::Unknown(e.to_string()),
                 }
             }
             request::Message::GetNotes(_get_notes) => match self.database.get_all_notes().await {
                 Ok(notes) => response::Message::Notes(notes),
+                Err(e) => response::Message::Unknown(e.to_string()),
+            },
+            request::Message::GetTags => match self.database.get_all_tags().await {
+                Ok(tags) => response::Message::Tags(tags),
                 Err(e) => response::Message::Unknown(e.to_string()),
             },
             request::Message::GetNotesFiltered(request::GetNotesFiltered {

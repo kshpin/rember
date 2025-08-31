@@ -9,6 +9,12 @@ pub struct TestStruct {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CreateNote {
     pub text: String,
+    pub tags: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CreateTag {
+    pub name: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -20,7 +26,7 @@ pub struct GetNotes {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GetNotesFiltered {
     pub search_text: Option<String>,
-    pub tags: Vec<String>,
+    pub tags: Option<Vec<String>>,
     pub limit: Option<u32>,
     pub offset: Option<u32>,
 }
@@ -30,7 +36,9 @@ pub struct GetNotesFiltered {
 #[serde(rename_all = "snake_case")]
 pub enum Message {
     CreateNote(CreateNote),
+    CreateTag(CreateTag),
     GetNotes(GetNotes),
+    GetTags,
     GetNotesFiltered(GetNotesFiltered),
     Test(TestStruct),
     Unknown(String),

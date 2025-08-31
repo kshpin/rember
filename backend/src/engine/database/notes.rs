@@ -31,14 +31,30 @@ impl NotesRepository {
         Self { pool }
     }
 
-    pub async fn create(&self, text: &str) -> Result<Note> {
-        sqlx::query_as!(
+    pub async fn create(&self, text: &str, tags: &Vec<String>) -> Result<Note> {
+        let note = sqlx::query_as!(
             Note,
             "INSERT INTO notes (text) VALUES ($1) RETURNING *",
             text
         )
         .fetch_one(&self.pool)
-        .await
+        .await?;
+
+        for tag in tags {
+            let tag = sqlx::query_as!(Tag, "SELECT * FROM tags WHERE name = $1", tag)
+                .fetch_one(&self.pool)
+                .await?;
+
+            sqlx::query!(
+                "INSERT INTO note_tags (note_id, tag_id) VALUES ($1, $2)",
+                note.id,
+                tag.id
+            )
+            .execute(&self.pool)
+            .await?;
+        }
+
+        Ok(note)
     }
 
     pub async fn get_by_id(&self, id: Uuid) -> Result<Option<Note>> {
@@ -69,7 +85,7 @@ impl NotesRepository {
         sqlx::query_file_as!(
             Note,
             "queries/note_list_search.sql",
-            search_text.unwrap(),
+            search_text.unwrap_or_default(),
             &tags,
         )
         .fetch_all(&self.pool)

@@ -43,6 +43,14 @@ impl App {
                     .join("\n");
                 self.response_box.text = text;
             }
+            response::Message::Tags(tags) => {
+                let text = tags
+                    .iter()
+                    .map(|tag| "#".to_string() + &tag.name.clone())
+                    .collect::<Vec<_>>()
+                    .join("\n");
+                self.response_box.text = text;
+            }
             response::Message::Unknown(msg) => {
                 self.response_box.text = format!("{msg:?}");
             }

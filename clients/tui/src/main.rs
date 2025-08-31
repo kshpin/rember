@@ -4,6 +4,8 @@ use crossterm::event::EventStream;
 use std::sync::LazyLock;
 use text_box::{InteractiveTextBox, TextBox};
 
+use rust_shared::request;
+
 mod client;
 mod clipboard;
 mod events;
@@ -27,6 +29,7 @@ pub struct App {
     crossterm_event_stream: EventStream,
 
     search_box: InteractiveTextBox,
+    parsed_search_box: TextBox,
     response_box: TextBox,
 
     websocket_client: WebSocketClient,
@@ -52,6 +55,13 @@ impl App {
             return Ok(());
         };
 
+        // request the whole list of tags first thing
+        self.websocket_client
+            .send(request::Message::GetTags)
+            .await
+            .expect("msg");
+
+        // main loop
         let mut terminal = ratatui::init();
         self.running = true;
         while self.running {
@@ -60,6 +70,7 @@ impl App {
         }
         ratatui::restore();
 
+        // clean up
         outgoing_thread.abort();
         incoming_thread.abort();
         Ok(())
