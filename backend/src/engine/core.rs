@@ -36,12 +36,12 @@ impl Engine {
         match msg {
             request::Message::CreateNote(create_note) => {
                 match self.database.create_note(&create_note.text).await {
-                    Ok(note) => response::Message::Unknown("note created".to_string()),
+                    Ok(note) => response::Message::Notes(vec![note]),
                     Err(e) => response::Message::Unknown(e.to_string()),
                 }
             }
             request::Message::GetNotes(_get_notes) => match self.database.get_all_notes().await {
-                Ok(notes) => response::Message::Unknown("notes fetched".to_string()),
+                Ok(notes) => response::Message::Notes(notes),
                 Err(e) => response::Message::Unknown(e.to_string()),
             },
             request::Message::GetNotesFiltered(request::GetNotesFiltered {
@@ -54,7 +54,7 @@ impl Engine {
                 .get_notes_filtered(search_text, tags, limit, offset)
                 .await
             {
-                Ok(notes) => response::Message::Unknown("notes fetched".to_string()),
+                Ok(notes) => response::Message::Notes(notes),
                 Err(e) => response::Message::Unknown(e.to_string()),
             },
             request::Message::Test(test_struct) => {

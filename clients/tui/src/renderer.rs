@@ -2,7 +2,7 @@ use ratatui::{
     prelude::{Buffer, Rect, Style, Widget},
     style::Color,
     text::{Line, Span},
-    widgets::{Block, Paragraph},
+    widgets::{Block, Paragraph, Wrap},
 };
 use std::cmp::{max, min};
 
@@ -20,8 +20,9 @@ impl Widget for &App {
 
 impl Widget for &TextBox {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let text_box =
-            Paragraph::new(self.text.clone()).block(Block::bordered().title(self.title.clone()));
+        let text_box = Paragraph::new(self.text.clone())
+            .block(Block::bordered().title(self.title.clone()))
+            .wrap(Wrap { trim: true });
         text_box.render(area, buf);
     }
 }

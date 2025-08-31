@@ -30,8 +30,22 @@ impl App {
     }
 
     async fn handle_websocket_message(&mut self, message: Option<response::Message>) {
-        if let Some(message) = message {
-            self.response_box.text = format!("{message:?}");
+        let Some(message) = message else {
+            return;
+        };
+
+        match message {
+            response::Message::Notes(notes) => {
+                let text = notes
+                    .iter()
+                    .map(|note| note.text.clone())
+                    .collect::<Vec<_>>()
+                    .join("\n");
+                self.response_box.text = text;
+            }
+            response::Message::Unknown(msg) => {
+                self.response_box.text = format!("{msg:?}");
+            }
         }
     }
 }

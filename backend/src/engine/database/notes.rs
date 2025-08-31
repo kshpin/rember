@@ -2,15 +2,10 @@ use chrono::NaiveDateTime;
 use sqlx::{FromRow, PgPool, Result, query_builder::QueryBuilder};
 use uuid::Uuid;
 
+pub use rust_shared::response::Note;
+
 // add import for tags
 use super::tags::Tag;
-
-#[derive(Debug, Clone, FromRow)]
-pub struct Note {
-    pub id: Uuid,
-    pub text: String,
-    pub created_at: NaiveDateTime,
-}
 
 pub struct NoteDate {
     pub id: Uuid,
@@ -58,6 +53,12 @@ impl NotesRepository {
             .await
     }
 
+    pub async fn get_by_text(&self, text: Option<String>) -> Result<Vec<Note>> {
+        sqlx::query_as!(Note, "SELECT * FROM notes WHERE text % $1", text)
+            .fetch_all(&self.pool)
+            .await
+    }
+
     pub async fn get_filtered(
         &self,
         search_text: Option<String>,
@@ -68,7 +69,7 @@ impl NotesRepository {
         sqlx::query_file_as!(
             Note,
             "src/engine/database/queries/note_list_search.sql",
-            search_text,
+            search_text.unwrap(),
             &tags,
         )
         .fetch_all(&self.pool)

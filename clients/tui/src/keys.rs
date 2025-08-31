@@ -11,17 +11,27 @@ impl App {
         }
 
         self.search_box.handle_key_event(key);
-        self.websocket_client
-            .send(request::Message::GetNotesFiltered(
-                request::GetNotesFiltered {
-                    search_text: None,
-                    tags: vec![],
+        if false {
+            self.websocket_client
+                .send(request::Message::GetNotes(request::GetNotes {
                     limit: Some(10),
                     offset: Some(0),
-                },
-            ))
-            .await
-            .expect("msg");
+                }))
+                .await
+                .expect("msg");
+        } else {
+            self.websocket_client
+                .send(request::Message::GetNotesFiltered(
+                    request::GetNotesFiltered {
+                        search_text: Some(self.search_box.text_box.text.clone()),
+                        tags: vec![],
+                        limit: Some(10),
+                        offset: Some(0),
+                    },
+                ))
+                .await
+                .expect("msg");
+        }
     }
 
     fn maybe_navigate(&mut self, key: KeyEvent) -> bool {

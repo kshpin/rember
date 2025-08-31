@@ -8,6 +8,9 @@
             "program": "${workspaceFolder}/target/debug/rember-backend",
             "args": [],
             "cwd": "${workspaceFolder}/backend",
+            "sourceLanguages": [
+                "rust"
+            ],
             "preLaunchTask": "rember: build backend",
             "sourceMap": {
                 ".": "${workspaceFolder}/backend"
@@ -20,6 +23,9 @@
             "program": "${workspaceFolder}/target/debug/rember-tui",
             "args": [],
             "cwd": "${workspaceFolder}/clients/tui",
+            "sourceLanguages": [
+                "rust"
+            ],
             "preLaunchTask": "rember: build tui",
             "sourceMap": {
                 ".": "${workspaceFolder}/clients/tui"

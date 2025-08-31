@@ -18,8 +18,6 @@ impl Database {
         limit: Option<u32>,
         offset: Option<u32>,
     ) -> Result<Vec<Note>> {
-        self.notes
-            .get_filtered(search_text, tags, limit, offset)
-            .await
+        self.notes.get_by_text(search_text).await
     }
 }
