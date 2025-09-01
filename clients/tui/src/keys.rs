@@ -10,10 +10,11 @@ impl App {
             return;
         }
 
-        self.search_box.handle_key_event(key);
+        self.search.search_box.handle_key_event(key);
 
-        let (tags, search_text) = parse_search_text(&self.search_box.text_box.text);
-        self.parsed_search_box.text = format!("{tags:?}, {search_text:?}");
+        let (tags, search_text) = parse_search_text(&self.search.search_box.text_box.text);
+        self.search.parsed_tags = tags.clone();
+        self.search.parsed_search_text = search_text.clone();
 
         if false {
             self.websocket_client
