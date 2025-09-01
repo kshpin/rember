@@ -12,13 +12,6 @@ pub struct WebSocketClient {
 }
 
 impl WebSocketClient {
-    pub fn new() -> Self {
-        Self {
-            app_to_server_tx: None,
-            server_to_app_rx: None,
-        }
-    }
-
     pub async fn connect_and_run(&mut self, url: &str) -> Result<(JoinHandle<()>, JoinHandle<()>)> {
         let (app_to_server_tx, mut app_to_server_rx) = mpsc::channel(100);
         let (server_to_app_tx, server_to_app_rx) = mpsc::channel(100);
