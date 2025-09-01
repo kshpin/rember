@@ -1,9 +1,10 @@
 use client::websocket::WebSocketClient;
 use color_eyre::Result;
 use crossterm::event::EventStream;
+use ratatui::prelude::{Buffer, Rect, Widget};
 use search::Search;
 use std::sync::LazyLock;
-use text_box::{InteractiveTextBox, TextBox};
+use text_box::TextBox;
 
 use rust_shared::request;
 
@@ -11,7 +12,6 @@ mod client;
 mod clipboard;
 mod events;
 mod keys;
-mod renderer;
 mod search;
 mod text_box;
 
@@ -79,5 +79,15 @@ impl App {
 
     fn quit(&mut self) {
         self.running = false;
+    }
+}
+
+impl Widget for &App {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        let search_area = Rect::new(0, 0, area.width, 3).clamp(area);
+        self.search.render(search_area, buf);
+
+        let response_area = Rect::new(0, 3, area.width, area.height - 3).clamp(area);
+        self.response_box.render(response_area, buf);
     }
 }
