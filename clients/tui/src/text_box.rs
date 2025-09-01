@@ -241,11 +241,31 @@ fn get_next_word_bound(text: &str, mut cursor: usize, direction_right: bool) -> 
         }
     }
 
+    // cursor should end up at the word side of the bound
+    // if we started on the word side, only need to move the cursor once
+    if cur_char_type_is_word {
+        return cursor;
+    }
+
+    // move cursor to next word bound again
+    let cur_char_type_is_word = !cur_char_type_is_word;
+    while (direction_left && cursor > 0 && cur_char_type_is_word == is_word_char(text[cursor - 1]))
+        || (direction_right
+            && cursor < text.len()
+            && cur_char_type_is_word == is_word_char(text[cursor]))
+    {
+        if direction_left {
+            cursor -= 1;
+        } else {
+            cursor += 1;
+        }
+    }
+
     cursor
 }
 
 fn is_word_char(c: char) -> bool {
-    c.is_alphanumeric()
+    c.is_alphanumeric() || c == '#'
 }
 
 impl Widget for &TextBox {
