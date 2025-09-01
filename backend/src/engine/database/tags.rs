@@ -1,5 +1,4 @@
 use sqlx::{PgPool, Result};
-use uuid::Uuid;
 
 pub use rust_shared::response::Tag;
 
@@ -22,12 +21,6 @@ impl TagsRepository {
     pub async fn get_all(&self) -> Result<Vec<Tag>> {
         sqlx::query_as!(Tag, "SELECT * FROM tags")
             .fetch_all(&self.pool)
-            .await
-    }
-
-    pub async fn get_by_id(&self, id: Uuid) -> Result<Option<Tag>> {
-        sqlx::query_as!(Tag, "SELECT * FROM tags WHERE id = $1", id)
-            .fetch_optional(&self.pool)
             .await
     }
 }

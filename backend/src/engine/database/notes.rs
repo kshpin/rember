@@ -1,5 +1,5 @@
 use chrono::NaiveDateTime;
-use sqlx::{FromRow, PgPool, Result, query_builder::QueryBuilder};
+use sqlx::{PgPool, Result};
 use uuid::Uuid;
 
 pub use rust_shared::response::Note;
@@ -7,6 +7,7 @@ pub use rust_shared::response::Note;
 // add import for tags
 use super::tags::Tag;
 
+#[allow(dead_code)]
 pub struct NoteDate {
     pub id: Uuid,
     pub note_id: Uuid,
@@ -14,6 +15,7 @@ pub struct NoteDate {
     pub date: NaiveDateTime,
 }
 
+#[allow(dead_code)]
 pub struct NoteWithDetails {
     pub note: Note,
     pub tags: Vec<Tag>,
@@ -57,20 +59,8 @@ impl NotesRepository {
         Ok(note)
     }
 
-    pub async fn get_by_id(&self, id: Uuid) -> Result<Option<Note>> {
-        sqlx::query_as!(Note, "SELECT * FROM notes WHERE id = $1", id)
-            .fetch_optional(&self.pool)
-            .await
-    }
-
     pub async fn get_all(&self) -> Result<Vec<Note>> {
         sqlx::query_as!(Note, "SELECT * FROM notes")
-            .fetch_all(&self.pool)
-            .await
-    }
-
-    pub async fn get_by_text(&self, text: Option<String>) -> Result<Vec<Note>> {
-        sqlx::query_as!(Note, "SELECT * FROM notes WHERE text % $1", text)
             .fetch_all(&self.pool)
             .await
     }
@@ -79,8 +69,8 @@ impl NotesRepository {
         &self,
         search_text: Option<String>,
         tags: Vec<String>,
-        limit: Option<u32>,
-        offset: Option<u32>,
+        _limit: Option<u32>,
+        _offset: Option<u32>,
     ) -> Result<Vec<Note>> {
         sqlx::query_file_as!(
             Note,
