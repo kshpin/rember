@@ -19,6 +19,7 @@ pub struct Cursor {
 pub struct TextBox {
     pub title: String,
     pub text: String,
+    pub border_color: Color,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -37,11 +38,21 @@ impl TextBox {
         self.text = text;
         self
     }
+
+    pub fn border_color(mut self, color: Color) -> Self {
+        self.border_color = color;
+        self
+    }
 }
 
 impl InteractiveTextBox {
     pub fn title(mut self, title: String) -> Self {
-        self.text_box.title = title;
+        self.text_box = self.text_box.title(title);
+        self
+    }
+
+    pub fn border_color(mut self, color: Color) -> Self {
+        self.text_box = self.text_box.border_color(color);
         self
     }
 
@@ -261,7 +272,11 @@ fn is_word_char(c: char) -> bool {
 impl Widget for &TextBox {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let text_box = Paragraph::new(self.text.clone())
-            .block(Block::bordered().title(self.title.clone()))
+            .block(
+                Block::bordered()
+                    .title(self.title.clone())
+                    .border_style(self.border_color),
+            )
             .wrap(Wrap { trim: true });
         text_box.render(area, buf);
     }
@@ -306,8 +321,11 @@ impl Widget for &InteractiveTextBox {
             spans.push(Span::styled(" ", cursor_style));
         }
 
-        let text_box = Paragraph::new(Line::from(spans))
-            .block(Block::bordered().title(self.text_box.title.clone()));
+        let text_box = Paragraph::new(Line::from(spans)).block(
+            Block::bordered()
+                .title(self.text_box.title.clone())
+                .border_style(self.text_box.border_color),
+        );
         text_box.render(area, buf);
     }
 }

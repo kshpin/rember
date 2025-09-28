@@ -1,6 +1,6 @@
 use color_eyre::Result;
 use crossterm::event::EventStream;
-use ratatui::prelude::{Buffer, Rect, Widget};
+use ratatui::prelude::{Buffer, Color, Rect, Widget};
 use std::sync::LazyLock;
 
 use rust_shared::request;
@@ -47,7 +47,9 @@ pub struct App {
 impl App {
     fn new() -> Self {
         Self {
-            new_note: InteractiveTextBox::default().title("New Note".to_string()),
+            new_note: InteractiveTextBox::default()
+                .title("New Note".to_string())
+                .border_color(Color::Yellow),
             ..Default::default()
         }
     }
