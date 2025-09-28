@@ -40,11 +40,9 @@ impl TextBox {
 }
 
 impl InteractiveTextBox {
-    pub fn with_title(title: String) -> Self {
-        Self {
-            text_box: TextBox::default().title(title),
-            ..Default::default()
-        }
+    pub fn title(mut self, title: String) -> Self {
+        self.text_box.title = title;
+        self
     }
 
     pub fn handle_key_event(&mut self, key: KeyEvent) {

@@ -29,26 +29,27 @@ impl From<SharedNote> for Note {
     }
 }
 
-#[derive(Default)]
 pub struct SearchBox {
-    pub search_box: InteractiveTextBox,
+    pub text_box: InteractiveTextBox,
     pub parsed_tags: Vec<String>,
     pub parsed_search_text: Option<String>,
 }
 
-impl SearchBox {
-    pub fn new() -> Self {
+impl Default for SearchBox {
+    fn default() -> Self {
         Self {
-            search_box: InteractiveTextBox::with_title("Search".to_string()),
+            text_box: InteractiveTextBox::default().title("Search".to_string()),
             parsed_tags: Vec::new(),
             parsed_search_text: None,
         }
     }
+}
 
+impl SearchBox {
     pub fn handle_key_event(&mut self, key: KeyEvent) {
-        self.search_box.handle_key_event(key);
+        self.text_box.handle_key_event(key);
 
-        let (tags, search_text) = parse_search_text(&self.search_box.text_box.text);
+        let (tags, search_text) = parse_search_text(&self.text_box.text_box.text);
         self.parsed_tags = tags;
         self.parsed_search_text = search_text;
     }
@@ -98,17 +99,17 @@ impl Widget for &SearchBox {
         let tag_color = Color::Blue;
         let text_color = Color::White;
 
-        let selection_range = self.search_box.cursor.selection_anchor.map(|anchor| {
+        let selection_range = self.text_box.cursor.selection_anchor.map(|anchor| {
             (
-                min(anchor, self.search_box.cursor.position),
-                max(anchor, self.search_box.cursor.position),
+                min(anchor, self.text_box.cursor.position),
+                max(anchor, self.text_box.cursor.position),
             )
         });
 
         let mut spans = Vec::new();
         let mut num_words_seen = 0;
         let mut last_char_was_space = true;
-        for (i, c) in self.search_box.text_box.text.chars().enumerate() {
+        for (i, c) in self.text_box.text_box.text.chars().enumerate() {
             if !c.is_whitespace() && last_char_was_space {
                 num_words_seen += 1;
             }
@@ -120,7 +121,7 @@ impl Widget for &SearchBox {
                 tag_color
             };
 
-            if i == self.search_box.cursor.position {
+            if i == self.text_box.cursor.position {
                 let color = if let Some((selection_left, _)) = selection_range
                     && i == selection_left
                 {
@@ -146,12 +147,12 @@ impl Widget for &SearchBox {
         }
 
         // render cursor if it's at the end of the text
-        if self.search_box.cursor.position == self.search_box.text_box.text.len() {
+        if self.text_box.cursor.position == self.text_box.text_box.text.len() {
             spans.push(Span::styled(" ", default_style.bg(cursor_color)));
         }
 
         let text_box = Paragraph::new(Line::from(spans))
-            .block(Block::bordered().title(self.search_box.text_box.title.clone()));
+            .block(Block::bordered().title(self.text_box.text_box.title.clone()));
         text_box.render(area, buf);
     }
 }

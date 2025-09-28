@@ -47,7 +47,7 @@ pub struct App {
 impl App {
     fn new() -> Self {
         Self {
-            search: SearchBox::new(),
+            new_note: InteractiveTextBox::default().title("New Note".to_string()),
             ..Default::default()
         }
     }
