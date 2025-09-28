@@ -8,12 +8,15 @@ use rust_shared::request;
 mod client;
 mod clipboard;
 mod events;
+mod focus;
 mod keys;
 mod search;
 mod text_box;
 
 use client::websocket::WebSocketClient;
+use focus::Focus;
 use search::{SearchBox, SearchResultsBox};
+use text_box::InteractiveTextBox;
 use text_box::TextBox;
 
 // set develop flag
@@ -31,9 +34,12 @@ pub struct App {
     running: bool,
     crossterm_event_stream: EventStream,
 
+    focus: Focus,
+
     search: SearchBox,
     search_results: SearchResultsBox,
     response_box: TextBox,
+    new_note: InteractiveTextBox,
 
     websocket_client: WebSocketClient,
 }
@@ -94,5 +100,12 @@ impl Widget for &App {
 
         let response_area = Rect::new(0, 6, area.width, area.height - 6).clamp(area);
         self.response_box.render(response_area, buf);
+
+        if self.focus == Focus::NewNote {
+            // vertical middle third of the screen
+            let new_note_area =
+                Rect::new(0, area.height / 3, area.width, area.height / 3).clamp(area);
+            self.new_note.render(new_note_area, buf);
+        }
     }
 }

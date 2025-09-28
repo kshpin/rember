@@ -1,12 +1,13 @@
-use crossterm::event::{KeyCode, KeyEvent};
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 use rust_shared::request;
 
 use crate::App;
+use crate::focus::Focus;
 
 impl App {
     pub async fn on_key_event(&mut self, key: KeyEvent) {
-        if self.maybe_navigate(key) {
+        if self.maybe_exit(key) || self.focus.maybe_update(key) {
             return;
         }
 
@@ -16,12 +17,17 @@ impl App {
             return;
         }
 
-        self.search.handle_key_event(key);
+        match self.focus {
+            Focus::Search => self.search.handle_key_event(key),
+            Focus::NewNote => self.new_note.handle_key_event(key),
+        }
 
         // if any displayable key is pressed, request the notes
         // this includes all chars, backspace, delete, etc.
-        let should_request =
-            key.code.is_backspace() || key.code.is_delete() || matches!(key.code, KeyCode::Char(_));
+        let should_request = self.focus == Focus::Search
+            && (key.code.is_backspace()
+                || key.code.is_delete()
+                || matches!(key.code, KeyCode::Char(_)));
 
         if should_request {
             self.websocket_client
@@ -38,11 +44,11 @@ impl App {
         }
     }
 
-    fn maybe_navigate(&mut self, key: KeyEvent) -> bool {
-        // determine from current navigation state and key event whether this is a navigation event
-        // if so, update the navigation state and return true
-
-        if key.code == KeyCode::Esc {
+    fn maybe_exit(&mut self, key: KeyEvent) -> bool {
+        if self.focus == Focus::Search
+            && key.modifiers.contains(KeyModifiers::CONTROL)
+            && key.code == KeyCode::Char('q')
+        {
             self.quit();
             return true;
         }
