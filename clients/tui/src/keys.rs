@@ -10,17 +10,20 @@ impl App {
             return;
         }
 
+        if key.code == KeyCode::Up || key.code == KeyCode::Down {
+            self.search_results
+                .move_selection(key.code == KeyCode::Down);
+            return;
+        }
+
         self.search.handle_key_event(key);
 
-        if false {
-            self.websocket_client
-                .send(request::Message::GetNotes(request::GetNotes {
-                    limit: Some(10),
-                    offset: Some(0),
-                }))
-                .await
-                .expect("msg");
-        } else {
+        // if any displayable key is pressed, request the notes
+        // this includes all chars, backspace, delete, etc.
+        let should_request =
+            key.code.is_backspace() || key.code.is_delete() || matches!(key.code, KeyCode::Char(_));
+
+        if should_request {
             self.websocket_client
                 .send(request::Message::GetNotesFiltered(
                     request::GetNotesFiltered {

@@ -36,6 +36,7 @@ impl App {
 
         match message {
             response::Message::Notes(notes) => {
+                self.search_results.set_notes(notes.clone());
                 let text = notes
                     .iter()
                     .map(|note| note.text.clone())

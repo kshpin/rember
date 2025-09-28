@@ -28,29 +28,21 @@ pub struct InteractiveTextBox {
 }
 
 impl TextBox {
-    pub fn with_title(title: String) -> Self {
-        Self {
-            title,
-            ..Default::default()
-        }
+    pub fn title(mut self, title: String) -> Self {
+        self.title = title;
+        self
     }
 
-    pub fn with_text(text: String) -> Self {
-        Self {
-            text,
-            ..Default::default()
-        }
-    }
-
-    pub fn with_title_and_text(title: String, text: String) -> Self {
-        Self { title, text }
+    pub fn text(mut self, text: String) -> Self {
+        self.text = text;
+        self
     }
 }
 
 impl InteractiveTextBox {
     pub fn with_title(title: String) -> Self {
         Self {
-            text_box: TextBox::with_title(title),
+            text_box: TextBox::default().title(title),
             ..Default::default()
         }
     }

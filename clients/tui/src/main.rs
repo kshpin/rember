@@ -1,10 +1,7 @@
-use client::websocket::WebSocketClient;
 use color_eyre::Result;
 use crossterm::event::EventStream;
 use ratatui::prelude::{Buffer, Rect, Widget};
-use search::Search;
 use std::sync::LazyLock;
-use text_box::TextBox;
 
 use rust_shared::request;
 
@@ -14,6 +11,10 @@ mod events;
 mod keys;
 mod search;
 mod text_box;
+
+use client::websocket::WebSocketClient;
+use search::{SearchBox, SearchResultsBox};
+use text_box::TextBox;
 
 // set develop flag
 pub static DEV: LazyLock<bool> =
@@ -30,7 +31,8 @@ pub struct App {
     running: bool,
     crossterm_event_stream: EventStream,
 
-    search: Search,
+    search: SearchBox,
+    search_results: SearchResultsBox,
     response_box: TextBox,
 
     websocket_client: WebSocketClient,
@@ -39,7 +41,7 @@ pub struct App {
 impl App {
     fn new() -> Self {
         Self {
-            search: Search::new(),
+            search: SearchBox::new(),
             ..Default::default()
         }
     }
@@ -87,7 +89,10 @@ impl Widget for &App {
         let search_area = Rect::new(0, 0, area.width, 3).clamp(area);
         self.search.render(search_area, buf);
 
-        let response_area = Rect::new(0, 3, area.width, area.height - 3).clamp(area);
+        let search_results_area = Rect::new(1, 3, area.width - 2, 3).clamp(area);
+        self.search_results.render(search_results_area, buf);
+
+        let response_area = Rect::new(0, 6, area.width, area.height - 6).clamp(area);
         self.response_box.render(response_area, buf);
     }
 }

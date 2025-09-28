@@ -7,16 +7,36 @@ use ratatui::{
 };
 use std::cmp::{max, min};
 
+use rust_shared::response::Note as SharedNote;
+
 use crate::text_box::InteractiveTextBox;
 
+pub struct Note(SharedNote);
+
+impl Note {
+    pub fn new(note: SharedNote) -> Self {
+        Self(note)
+    }
+
+    pub fn text(&self) -> String {
+        self.0.text.clone()
+    }
+}
+
+impl From<SharedNote> for Note {
+    fn from(note: SharedNote) -> Self {
+        Self(note)
+    }
+}
+
 #[derive(Default)]
-pub struct Search {
+pub struct SearchBox {
     pub search_box: InteractiveTextBox,
     pub parsed_tags: Vec<String>,
     pub parsed_search_text: Option<String>,
 }
 
-impl Search {
+impl SearchBox {
     pub fn new() -> Self {
         Self {
             search_box: InteractiveTextBox::with_title("Search".to_string()),
@@ -69,7 +89,7 @@ fn parse_search_text(text: &str) -> (Vec<String>, Option<String>) {
     (tags, search_start.map(|val| text[val..].to_string()))
 }
 
-impl Widget for &Search {
+impl Widget for &SearchBox {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let default_style = Style::default();
         let cursor_color = Color::White;
@@ -133,5 +153,59 @@ impl Widget for &Search {
         let text_box = Paragraph::new(Line::from(spans))
             .block(Block::bordered().title(self.search_box.text_box.title.clone()));
         text_box.render(area, buf);
+    }
+}
+
+#[derive(Default)]
+pub struct SearchResultsBox {
+    pub search_results: Vec<Note>,
+    pub selected_index: usize,
+}
+
+impl SearchResultsBox {
+    pub fn set_notes(&mut self, notes: Vec<SharedNote>) {
+        self.search_results = notes.into_iter().map(Note::from).collect();
+        self.selected_index = 0;
+    }
+
+    #[allow(clippy::collapsible_else_if)]
+    pub fn move_selection(&mut self, direction_down: bool) {
+        if self.search_results.is_empty() {
+            self.selected_index = 0;
+            return;
+        }
+
+        self.selected_index = if direction_down {
+            if self.selected_index >= self.search_results.len() - 1 {
+                self.search_results.len() - 1
+            } else {
+                self.selected_index + 1
+            }
+        } else {
+            if self.selected_index == 0 {
+                0
+            } else {
+                self.selected_index - 1
+            }
+        };
+    }
+}
+
+impl Widget for &SearchResultsBox {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        self.search_results
+            .iter()
+            .enumerate()
+            .take(area.height as usize)
+            .for_each(|(i, note)| {
+                let style = if i == self.selected_index {
+                    Style::default().bg(Color::LightGreen)
+                } else {
+                    Style::default()
+                };
+
+                let line = Paragraph::new(note.text()).style(style);
+                line.render(Rect::new(area.x, area.y + i as u16, area.width, 1), buf)
+            });
     }
 }
